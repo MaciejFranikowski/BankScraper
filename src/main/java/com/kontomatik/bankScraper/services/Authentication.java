@@ -107,7 +107,6 @@ public class Authentication {
                 .ignoreContentType(true)
                 .ignoreHttpErrors(true)
                 .execute();
-        System.out.println("First call result"+ response.statusCode());
         this.cookies.getCookies().putAll(response.cookies());
         response  = Jsoup.connect("https://online.mbank.pl/pl/Sca/FinalizeAuthorization")
                 .method(Connection.Method.POST)
@@ -117,7 +116,6 @@ public class Authentication {
                 .ignoreHttpErrors(true)
                 .execute();
         this.cookies.getCookies().putAll(response.cookies());
-        System.out.println("Second call result"+ response.statusCode());
         verifyCorrectLogin();
     }
     private void verifyCorrectLogin() throws IOException {
@@ -128,7 +126,7 @@ public class Authentication {
         if (response.statusCode()==200) {
             System.out.println("Login successful");
         } else {
-            throw new AuthenticationException("Login failed");
+            throw new AuthenticationException("\nLogin failed\n");
         }
     }
 }
