@@ -4,7 +4,7 @@ import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.models.*;
 import com.google.gson.Gson;
 import org.jsoup.Connection;
-import org.jsoup.Jsoup;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +18,8 @@ public class Authentication {
 
     private final Gson gson;
     private final Cookies cookies;
+    private final HttpService httpService;
+    private final ResponseHandler responseHandler;
 
     @Value("${mbank.login.url}")
     private String loginUrl;
@@ -43,9 +45,12 @@ public class Authentication {
     @Value("${mbank.init.url}")
     private String initUrl;
 
-    public Authentication(Gson gson, Cookies cookies) {
+    @Autowired
+    public Authentication(Gson gson, Cookies cookies, HttpService httpService, ResponseHandler responseHandler) {
         this.gson = gson;
         this.cookies = cookies;
+        this.httpService = httpService;
+        this.responseHandler = responseHandler;
     }
 
     public void authenticate(HashMap<String, String> credentials) {
@@ -62,48 +67,30 @@ public class Authentication {
     }
 
     private void initialLogin(HashMap<String, String> credentials) throws IOException {
-        Connection.Response response = Jsoup.connect(loginUrl)
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
-                .ignoreContentType(true)
-                .data(credentials)
-                .method(Connection.Method.POST)
-                .execute();
+        Connection.Response response = httpService.sendPostRequest(loginUrl, credentials);
         cookies.setCookies(new HashMap<>(response.cookies()));
     }
 
     private CsrfResponse fetchCsrfToken() throws IOException {
-        Connection.Response response = Jsoup.connect(fetchCsrfTokenUrl)
-                .ignoreContentType(true)
-                .cookies(cookies.getCookies())
-                .method(Connection.Method.GET)
-                .execute();
+        Connection.Response response = httpService.sendGetRequest(fetchCsrfTokenUrl, cookies.getCookies());
         updateCookies(response.cookies());
-        return ResponseHandler.handleResponse(response.body(), CsrfResponse.class, gson);
+        return responseHandler.handleResponse(response.body(), CsrfResponse.class, gson);
     }
 
     private ScaResponse fetchScaAuthorizationData() throws IOException {
-        Connection.Response response = Jsoup.connect(fetchScaIdUrl)
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
-                .ignoreContentType(true)
-                .cookies(cookies.getCookies())
-                .method(Connection.Method.POST)
-                .execute();
+        Connection.Response response = httpService.sendPostRequest(fetchScaIdUrl, new HashMap<>(), cookies.getCookies());
         updateCookies(response.cookies());
-        return ResponseHandler.handleResponse(response.body(), ScaResponse.class, gson);
+        return responseHandler.handleResponse(response.body(), ScaResponse.class, gson);
     }
 
     private String initTwoFactorAuth(String scaId, String csrfToken) throws IOException {
-        Connection.Response response = Jsoup.connect(beginTwoFactorAuthUrl)
-                .header("X-Request-Verification-Token", csrfToken)
-                .ignoreContentType(true)
-                .ignoreHttpErrors(true)
-                .cookies(cookies.getCookies())
-                .data("Data", new InitTwoFactorData(scaId).toString())
-                .data("Url", "sca/authorization/disposable")
-                .data("Method", "POST")
-                .method(Connection.Method.POST)
-                .execute();
-        InitTwoFactorResponse initResponse = ResponseHandler.handleResponse(response.body(), InitTwoFactorResponse.class, gson);
+        Map<String, String> requestData = new HashMap<>();
+        requestData.put("Data", new InitTwoFactorData(scaId).toString());
+        requestData.put("Url", "sca/authorization/disposable");
+        requestData.put("Method", "POST");
+
+        Connection.Response response = httpService.sendPostRequest(beginTwoFactorAuthUrl, requestData, cookies.getCookies(),csrfToken);
+        InitTwoFactorResponse initResponse = responseHandler.handleResponse(response.body(), InitTwoFactorResponse.class, gson);
         updateCookies(response.cookies());
         return initResponse.getTranId();
     }
@@ -111,9 +98,9 @@ public class Authentication {
     private void waitForUserAuthentication(String twoFactorAuthToken) throws InterruptedException, IOException {
         String status;
         do {
-            Connection.Response response = sendStatusRequest(twoFactorAuthToken);
+            Connection.Response response = httpService.sendPostRequest(statusTwoFactorAuthUrl, Map.of("TranId", twoFactorAuthToken));
             updateCookies(response.cookies());
-            AuthStatusResponse statusResponseBody = ResponseHandler.handleResponse(response.body(), AuthStatusResponse.class, gson);
+            AuthStatusResponse statusResponseBody = responseHandler.handleResponse(response.body(), AuthStatusResponse.class, gson);
             status = statusResponseBody.getStatus();
             Thread.sleep(1000);
             if ("Canceled".equals(status)) {
@@ -121,48 +108,25 @@ public class Authentication {
             }
         } while (!"Authorized".equals(status));
     }
-    private Connection.Response sendStatusRequest(String twoFactorAuthToken) throws IOException {
-        return Jsoup.connect(statusTwoFactorAuthUrl)
-                .method(Connection.Method.POST)
-                .data("TranId", twoFactorAuthToken)
-                .cookies(cookies.getCookies())
-                .ignoreContentType(true)
-                .execute();
-    }
 
     private void finalizeAuthorization(String scaId, String csrfToken) throws IOException {
-        Connection.Response response = Jsoup.connect(executeTwoFactoAuthUrl)
-                .header("X-Request-Verification-Token", csrfToken)
-                .method(Connection.Method.POST)
-                .cookies(cookies.getCookies())
-                .requestBody(gson.toJson(new Object()))
-                .ignoreContentType(true)
-                .ignoreHttpErrors(true)
-                .execute();
+        Connection.Response response = httpService.sendExecutionRequest(executeTwoFactoAuthUrl, gson.toJson(new Object()), cookies.getCookies(),csrfToken);
         updateCookies(response.cookies());
-
-        response = Jsoup.connect(scaFinalizeUrl)
-                .method(Connection.Method.POST)
-                .data("scaAuthorizationId", scaId)
-                .cookies(cookies.getCookies())
-                .ignoreContentType(true)
-                .ignoreHttpErrors(true)
-                .execute();
+        response = httpService.sendPostRequest(
+                scaFinalizeUrl, Map.of("scaAuthorizationId", scaId), cookies.getCookies(),csrfToken);
         updateCookies(response.cookies());
-
         verifyCorrectLogin();
     }
 
     private void verifyCorrectLogin() throws IOException {
-        Connection.Response response = Jsoup.connect(initUrl + "?_=" + LocalDateTime.now())
-                .cookies(cookies.getCookies())
-                .ignoreContentType(true)
-                .execute();
+        Connection.Response response = httpService.sendGetRequest(initUrl + "?_=" + LocalDateTime.now(), cookies.getCookies());
         if (response.statusCode() != 200) {
             throw new AuthenticationException("Login failed");
         }
     }
+
     private void updateCookies(Map<String, String> newCookies) {
         cookies.getCookies().putAll(newCookies);
     }
+
 }
