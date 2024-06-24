@@ -1,7 +1,9 @@
 package com.kontomatik.bankScraper.models;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.ToString;
 
+@ToString
 public class Account {
     @SerializedName("accountNumber")
     public String accountNumber;
@@ -18,15 +20,4 @@ public class Account {
     @SerializedName("customName")
     public String customName;
 
-
-    @Override
-    public String toString() {
-        return "Account{" +
-                "accountNumber='" + accountNumber + '\'' +
-                ", balance=" + balance +
-                ", currency='" + currency + '\'' +
-                ", name='" + name + '\'' +
-                ", customName='" + customName + '\'' +
-                '}';
-    }
 }

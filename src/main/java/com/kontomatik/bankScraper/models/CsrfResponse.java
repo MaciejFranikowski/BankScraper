@@ -1,20 +1,12 @@
 package com.kontomatik.bankScraper.models;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
+
+@Getter
+@ToString
+@AllArgsConstructor
 public class CsrfResponse {
     public final String csrfToken;
-
-    public CsrfResponse(String antiForgeryToken) {
-        this.csrfToken = antiForgeryToken;
-    }
-
-    public String getCsrfToken() {
-        return csrfToken;
-    }
-
-    @Override
-    public String toString() {
-        return "SetupDataResponseBody{" +
-                "antiForgeryToken='" + csrfToken + '\'' +
-                '}';
-    }
 }
