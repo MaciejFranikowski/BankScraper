@@ -33,15 +33,15 @@ public class UserInteraction {
 
     private String formatAccountGroups(AccountGroups accountGroups) {
         StringBuilder sb = new StringBuilder();
+        sb.append("\n");
         for (AccountGroup group : accountGroups.accountGroups) {
             for (Account account : group.accounts) {
-                sb.append("  Account Name: ").append(account.name).append("\n");
-                sb.append("  Account Number: ").append(account.accountNumber).append("\n");
-                sb.append("  Balance: ").append(account.balance).append(" ").append(account.currency).append("\n");
-                sb.append("  Custom Name: ").append(account.customName).append("\n");
+                sb.append("Account Name: ").append(account.name).append("\n");
+                sb.append("Account Number: ").append(account.accountNumber).append("\n");
+                sb.append("Balance: ").append(account.balance).append(" ").append(account.currency).append("\n");
+                sb.append("Custom Name: ").append(account.customName).append("\n");
                 sb.append("\n");
             }
-            sb.append("\n");
         }
         return sb.toString();
     }
