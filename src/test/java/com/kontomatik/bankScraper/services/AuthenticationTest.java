@@ -362,7 +362,6 @@ class AuthenticationTest {
         HashMap<String, String> credentials = new HashMap<>();
         credentials.put("username", "testuser");
         credentials.put("password", "testpassword");
-        Gson gson = new Gson();
 
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);

@@ -91,7 +91,6 @@ class MbankScraperTest {
 
 
         Connection.Response response = mock(Connection.Response.class);
-//        AccountGroups groups = mock(AccountGroups.class);
         when(httpService.sendGetRequest(anyString(), anyMap())).thenReturn(response);
         when(response.body()).thenReturn(jsonString);
         doAnswer(invocation -> {
@@ -118,6 +117,7 @@ class MbankScraperTest {
         assertEquals(1119.15,
                 capturedGroups.getAccountGroups().getFirst().getAccounts().getFirst().getBalance());
     }
+
     @Test
     void shouldHandleErrorResponse() throws Exception {
         // Given
