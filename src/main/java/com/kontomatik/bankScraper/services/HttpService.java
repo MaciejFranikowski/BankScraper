@@ -21,6 +21,7 @@ public class HttpService {
                 .method(Connection.Method.POST)
                 .execute();
     }
+
     public Connection.Response sendPostRequest(String url, Map<String, String> data, Map<String, String> cookies) throws IOException {
         return Jsoup.connect(url)
                 .header("User-Agent", userAgent)
@@ -30,6 +31,7 @@ public class HttpService {
                 .method(Connection.Method.POST)
                 .execute();
     }
+
     public Connection.Response sendPostRequest(String url, Map<String, String> data, Map<String, String> cookies, String csrfToken) throws IOException {
         return Jsoup.connect(url)
                 .header("User-Agent", userAgent)
@@ -40,7 +42,8 @@ public class HttpService {
                 .method(Connection.Method.POST)
                 .execute();
     }
-    public Connection.Response sendExecutionRequest(String url, String emptyObject , Map<String, String> cookies, String csrfToken) throws IOException {
+
+    public Connection.Response sendExecutionRequest(String url, String emptyObject, Map<String, String> cookies, String csrfToken) throws IOException {
         return Jsoup.connect(url)
                 .header("User-Agent", userAgent)
                 .header("X-Request-Verification-Token", csrfToken)
@@ -50,6 +53,7 @@ public class HttpService {
                 .method(Connection.Method.POST)
                 .execute();
     }
+
     public Connection.Response sendGetRequest(String url, Map<String, String> cookies) throws IOException {
         return Jsoup.connect(url)
                 .ignoreContentType(true)

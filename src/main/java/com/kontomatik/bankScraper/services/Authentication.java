@@ -3,8 +3,8 @@ package com.kontomatik.bankScraper.services;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.models.*;
 import com.google.gson.Gson;
+import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class Authentication {
 
     private final Gson gson;
@@ -45,14 +46,6 @@ public class Authentication {
     @Value("${mbank.init.url}")
     private String initUrl;
 
-    @Autowired
-    public Authentication(Gson gson, Cookies cookies, HttpService httpService, ResponseHandler responseHandler) {
-        this.gson = gson;
-        this.cookies = cookies;
-        this.httpService = httpService;
-        this.responseHandler = responseHandler;
-    }
-
     public void authenticate(HashMap<String, String> credentials) {
         try {
             initialLogin(credentials);
@@ -74,13 +67,13 @@ public class Authentication {
     private CsrfResponse fetchCsrfToken() throws IOException {
         Connection.Response response = httpService.sendGetRequest(fetchCsrfTokenUrl, cookies.getCookies());
         updateCookies(response.cookies());
-        return responseHandler.handleResponse(response.body(), CsrfResponse.class, gson);
+        return responseHandler.handleResponse(response.body(), CsrfResponse.class);
     }
 
     private ScaResponse fetchScaAuthorizationData() throws IOException {
         Connection.Response response = httpService.sendPostRequest(fetchScaIdUrl, new HashMap<>(), cookies.getCookies());
         updateCookies(response.cookies());
-        return responseHandler.handleResponse(response.body(), ScaResponse.class, gson);
+        return responseHandler.handleResponse(response.body(), ScaResponse.class);
     }
 
     private String initTwoFactorAuth(String scaId, String csrfToken) throws IOException {
@@ -89,8 +82,8 @@ public class Authentication {
         requestData.put("Url", "sca/authorization/disposable");
         requestData.put("Method", "POST");
 
-        Connection.Response response = httpService.sendPostRequest(beginTwoFactorAuthUrl, requestData, cookies.getCookies(),csrfToken);
-        InitTwoFactorResponse initResponse = responseHandler.handleResponse(response.body(), InitTwoFactorResponse.class, gson);
+        Connection.Response response = httpService.sendPostRequest(beginTwoFactorAuthUrl, requestData, cookies.getCookies(), csrfToken);
+        InitTwoFactorResponse initResponse = responseHandler.handleResponse(response.body(), InitTwoFactorResponse.class);
         updateCookies(response.cookies());
         return initResponse.getTranId();
     }
@@ -98,9 +91,12 @@ public class Authentication {
     private void waitForUserAuthentication(String twoFactorAuthToken) throws InterruptedException, IOException {
         String status;
         do {
-            Connection.Response response = httpService.sendPostRequest(statusTwoFactorAuthUrl, Map.of("TranId", twoFactorAuthToken));
+            Connection.Response response = httpService.sendPostRequest(
+                    statusTwoFactorAuthUrl,
+                    Map.of("TranId", twoFactorAuthToken),
+                    cookies.getCookies());
             updateCookies(response.cookies());
-            AuthStatusResponse statusResponseBody = responseHandler.handleResponse(response.body(), AuthStatusResponse.class, gson);
+            AuthStatusResponse statusResponseBody = responseHandler.handleResponse(response.body(), AuthStatusResponse.class);
             status = statusResponseBody.getStatus();
             Thread.sleep(1000);
             if ("Canceled".equals(status)) {
@@ -110,10 +106,10 @@ public class Authentication {
     }
 
     private void finalizeAuthorization(String scaId, String csrfToken) throws IOException {
-        Connection.Response response = httpService.sendExecutionRequest(executeTwoFactoAuthUrl, gson.toJson(new Object()), cookies.getCookies(),csrfToken);
+        Connection.Response response = httpService.sendExecutionRequest(executeTwoFactoAuthUrl, gson.toJson(new Object()), cookies.getCookies(), csrfToken);
         updateCookies(response.cookies());
         response = httpService.sendPostRequest(
-                scaFinalizeUrl, Map.of("scaAuthorizationId", scaId), cookies.getCookies(),csrfToken);
+                scaFinalizeUrl, Map.of("scaAuthorizationId", scaId), cookies.getCookies(), csrfToken);
         updateCookies(response.cookies());
         verifyCorrectLogin();
     }

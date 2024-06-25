@@ -4,13 +4,16 @@ package com.kontomatik.bankScraper.cli;
 import com.kontomatik.bankScraper.models.Account;
 import com.kontomatik.bankScraper.models.AccountGroup;
 import com.kontomatik.bankScraper.models.AccountGroups;
+import lombok.Setter;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Scanner;
+
+@Setter
 @Component
 public class UserInteraction {
-    private final Scanner scanner;
+    private Scanner scanner;
 
     public UserInteraction() {
         this.scanner = new Scanner(System.in);
@@ -27,11 +30,7 @@ public class UserInteraction {
         return credentials;
     }
 
-    public void displayAccountGroups(AccountGroups accountGroups) {
-        System.out.println(formatAccountGroups(accountGroups));
-    }
-
-    private String formatAccountGroups(AccountGroups accountGroups) {
+    public String formatAccountGroups(AccountGroups accountGroups) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
         for (AccountGroup group : accountGroups.accountGroups) {
