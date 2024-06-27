@@ -39,56 +39,58 @@ class MbankScraperTest {
     @Test
     void shouldScrape() throws Exception {
         // Given
-       String jsonString = "{"
-            + "\"accountsGroups\":["
-                + "{"
-                    + "\"accounts\":["
-                        + "{"
-                            + "\"accountNumber\":\"05 1120 2004 0000 3212 7715 8837\","
-                            + "\"balance\":1119.15,"
-                            + "\"currency\":\"PLN\","
-                            + "\"name\":\"eKonto\","
-                            + "\"customName\":\"eKonto WF\""
-                        + "}"
-                    + "],"
-                    + "\"header\":\"Personal\","
-                    + "\"summary\":{"
-                        + "\"currency\":\"PLN\","
-                        + "\"isRoundedToOneCurrency\":false,"
-                        + "\"balance\":1119.15"
-                    + "}"
-                + "},"
-                + "{"
-                    + "\"accounts\":["
-                        + "{"
-                            + "\"accountNumber\":\"49 1240 2004 0000 3312 2296 8860\","
-                            + "\"balance\":0.00,"
-                            + "\"currency\":\"USD\","
-                            + "\"name\":\"eKonto walutowe USD\","
-                            + "\"customName\":\"\""
-                        + "},"
-                        + "{"
-                            + "\"accountNumber\":\"00 1140 2234 0000 3912 1326 1146\","
-                            + "\"balance\":0.00,"
-                            + "\"currency\":\"EUR\","
-                            + "\"name\":\"eKonto walutowe EUR\","
-                            + "\"customName\":\"\""
-                        + "}"
-                    + "],"
-                    + "\"header\":\"Foreigns\","
-                    + "\"summary\":{"
-                        + "\"currency\":\"PLN\","
-                        + "\"isRoundedToOneCurrency\":true,"
-                        + "\"balance\":0.000000"
-                    + "}"
-                + "}"
-            + "],"
-            + "\"summary\":{"
-                + "\"currency\":\"PLN\","
-                + "\"isRoundedToOneCurrency\":true,"
-                + "\"balance\":1119.150000"
-            + "}"
-        + "}";
+        String jsonString = """
+                {
+                    "accountsGroups":[
+                        {
+                            "accounts":[
+                                {
+                                    "accountNumber":"05 1120 2004 0000 3212 7715 8837",
+                                    "balance":1119.15,
+                                    "currency":"PLN",
+                                    "name":"eKonto",
+                                    "customName":"eKonto WF"
+                                }
+                            ],
+                            "header":"Personal",
+                            "summary":{
+                                "currency":"PLN",
+                                "isRoundedToOneCurrency":false,
+                                "balance":1119.15
+                            }
+                        },
+                        {
+                            "accounts":[
+                                {
+                                    "accountNumber":"49 1240 2004 0000 3312 2296 8860",
+                                    "balance":0.00,
+                                    "currency":"USD",
+                                    "name":"eKonto walutowe USD",
+                                    "customName":""
+                                },
+                                {
+                                    "accountNumber":"00 1140 2234 0000 3912 1326 1146",
+                                    "balance":0.00,
+                                    "currency":"EUR",
+                                    "name":"eKonto walutowe EUR",
+                                    "customName":""
+                                }
+                            ],
+                            "header":"Foreigns",
+                            "summary":{
+                                "currency":"PLN",
+                                "isRoundedToOneCurrency":true,
+                                "balance":0.000000
+                            }
+                        }
+                    ],
+                    "summary":{
+                        "currency":"PLN",
+                        "isRoundedToOneCurrency":true,
+                        "balance":1119.150000
+                    }
+                }
+                """;
 
 
         Connection.Response response = mock(Connection.Response.class);

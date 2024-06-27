@@ -73,17 +73,19 @@ class UserInteractionTest {
 
         AccountGroups accountGroups = new AccountGroups(accountGroupsList);
 
-        String expectedOutput = "\n" +
-                "Account Name: Account1\n" +
-                "Account Number: 123456\n" +
-                "Balance: 1000.0 USD\n" +
-                "Custom Name: CustomAccount1\n" +
-                "\n" +
-                "Account Name: Account2\n" +
-                "Account Number: 654321\n" +
-                "Balance: 2000.0 EUR\n" +
-                "Custom Name: CustomAccount2\n" +
-                "\n";
+        String expectedOutput = """
+
+                Account Name: Account1
+                Account Number: 123456
+                Balance: 1000.0 USD
+                Custom Name: CustomAccount1
+
+                Account Name: Account2
+                Account Number: 654321
+                Balance: 2000.0 EUR
+                Custom Name: CustomAccount2
+
+                """;
 
         // when
         var result = userInteraction.formatAccountGroups(accountGroups);
