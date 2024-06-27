@@ -14,6 +14,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -114,7 +115,7 @@ class MbankScraperTest {
         assertEquals(2, capturedGroups.getAccountGroups().size());
         assertEquals("05 1120 2004 0000 3212 7715 8837",
                 capturedGroups.getAccountGroups().getFirst().getAccounts().getFirst().getAccountNumber());
-        assertEquals(1119.15,
+        assertEquals(new BigDecimal("1119.15"),
                 capturedGroups.getAccountGroups().getFirst().getAccounts().getFirst().getBalance());
     }
 

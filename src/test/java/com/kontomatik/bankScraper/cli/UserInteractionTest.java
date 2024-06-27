@@ -6,6 +6,7 @@ import com.kontomatik.bankScraper.models.AccountGroups;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +47,7 @@ class UserInteractionTest {
         Account account1 = Account.builder()
                 .name("Account1")
                 .accountNumber("123456")
-                .balance(1000.0)
+                .balance(new BigDecimal("1000.0"))
                 .currency("USD")
                 .customName("CustomAccount1")
                 .build();
@@ -54,7 +55,7 @@ class UserInteractionTest {
         Account account2 = Account.builder()
                 .name("Account2")
                 .accountNumber("654321")
-                .balance(2000.0)
+                .balance(new BigDecimal("2000.0"))
                 .currency("EUR")
                 .customName("CustomAccount2")
                 .build();

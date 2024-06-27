@@ -12,7 +12,7 @@ import lombok.ToString;
 public class Account {
     public String accountNumber;
 
-    public double balance;
+    public BigDecimal balance;
 
     public String currency;
 
