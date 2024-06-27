@@ -11,19 +11,19 @@ which uses two-factor authentication and handles various authentication steps su
 This project uses Maven for dependency management. To install the project, you can use the following command:
 
 ```bash
-mvn clean install
+./mvnw clean install
 ```
 
 ## Usage
-To run the application, use the following command:
+To run the application, use Maven Wrapper and the following command:
 
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 ## Testing
 The project includes unit tests, which can be run with the following command:
 
 ```bash
-mvn test
+./mvnw test
 ```
