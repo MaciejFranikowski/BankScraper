@@ -1,6 +1,5 @@
 package com.kontomatik.bankScraper.services;
 
-import com.google.gson.Gson;
 import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.ScrapingException;
 import com.kontomatik.bankScraper.models.AccountGroups;
