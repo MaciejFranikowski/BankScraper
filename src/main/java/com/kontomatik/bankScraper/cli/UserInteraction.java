@@ -57,4 +57,9 @@ public class UserInteraction {
         }
         return sb.toString();
     }
+
+    public void notifyTwoFactorAuthStart() {
+        System.out.println("Two-factor authentication process has started. Please check your device.");
+    }
+
 }

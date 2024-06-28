@@ -1,6 +1,7 @@
 package com.kontomatik.bankScraper.services;
 
 import com.google.gson.Gson;
+import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.models.*;
 import org.jsoup.Connection;
@@ -34,6 +35,8 @@ class AuthenticationTest {
     private HttpService httpService;
     @SpyBean
     private ResponseHandler responseHandler;
+    @SpyBean
+    private UserInteraction userInteraction;
     @Autowired
     private Authentication authentication;
 

@@ -1,5 +1,6 @@
 package com.kontomatik.bankScraper.services;
 
+import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.models.*;
 import com.google.gson.Gson;
@@ -18,9 +19,9 @@ import java.util.Map;
 public class Authentication {
 
     private final Gson gson;
-    private final Cookies cookies;
     private final HttpService httpService;
     private final ResponseHandler responseHandler;
+    private final UserInteraction userInteraction;
 
     @Value("${mbank.login.url}")
     private String loginUrl;
