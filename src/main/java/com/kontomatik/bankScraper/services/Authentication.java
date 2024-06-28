@@ -82,7 +82,7 @@ public class Authentication {
 
     private String initTwoFactorAuth(String scaId, String csrfToken, Cookies cookies) throws IOException {
         Map<String, String> requestData = new HashMap<>();
-        requestData.put("Data", new InitTwoFactorData(scaId).toString());
+        requestData.put("Data", wrapScaIdIntoJson(scaId));
         requestData.put("Url", "sca/authorization/disposable");
         requestData.put("Method", "POST");
 
@@ -127,6 +127,10 @@ public class Authentication {
 
     private void updateCookies(Cookies cookies ,Map<String, String> newCookies) {
         cookies.getCookies().putAll(newCookies);
+    }
+
+    private String wrapScaIdIntoJson(String scaId) {
+        return "{\"scaAuthorizationId\": \"" + scaId + "\"}";
     }
 
 }
