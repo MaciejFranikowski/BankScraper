@@ -112,11 +112,11 @@ class MbankScraperTest {
 
         // Verify the captured AccountGroups object matches the expected data
         AccountGroups capturedGroups = captor.getValue();
-        assertEquals(2, capturedGroups.getAccountGroups().size());
+        assertEquals(2, capturedGroups.accountGroups().size());
         assertEquals("05 1120 2004 0000 3212 7715 8837",
-                capturedGroups.getAccountGroups().getFirst().getAccounts().getFirst().getAccountNumber());
+                capturedGroups.accountGroups().getFirst().accounts().getFirst().accountNumber());
         assertEquals(new BigDecimal("1119.15"),
-                capturedGroups.getAccountGroups().getFirst().getAccounts().getFirst().getBalance());
+                capturedGroups.accountGroups().getFirst().accounts().getFirst().balance());
     }
 
     @Test

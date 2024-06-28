@@ -4,7 +4,6 @@ import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.models.*;
 import com.google.gson.Gson;
-import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class Authentication {
 
     private final Gson gson;
@@ -47,12 +45,19 @@ public class Authentication {
     @Value("${mbank.init.url}")
     private String initUrl;
 
+    public Authentication(Gson gson, HttpService httpService, ResponseHandler responseHandler, UserInteraction userInteraction) {
+        this.gson = gson;
+        this.httpService = httpService;
+        this.responseHandler = responseHandler;
+        this.userInteraction = userInteraction;
+    }
+
     public Cookies authenticate(Credentials credentials) {
         try {
             Cookies cookies = new Cookies();
             initialLogin(credentials, cookies);
-            String csrfToken = fetchCsrfToken(cookies).getCsrfToken();
-            String scaId = fetchScaAuthorizationData(cookies).getScaAuthorizationId();
+            String csrfToken = fetchCsrfToken(cookies).csrfToken();
+            String scaId = fetchScaAuthorizationData(cookies).scaAuthorizationId();
             String twoFactorAuthToken = initTwoFactorAuth(scaId, csrfToken, cookies);
             userInteraction.notifyTwoFactorAuthStart();
             waitForUserAuthentication(twoFactorAuthToken, cookies);
@@ -89,7 +94,7 @@ public class Authentication {
         Connection.Response response = httpService.sendPostRequest(beginTwoFactorAuthUrl, requestData, cookies.getCookies(), csrfToken);
         InitTwoFactorResponse initResponse = responseHandler.handleResponse(response.body(), InitTwoFactorResponse.class);
         updateCookies(cookies, response.cookies());
-        return initResponse.getTranId();
+        return initResponse.tranId();
     }
 
     private void waitForUserAuthentication(String twoFactorAuthToken, Cookies cookies) throws InterruptedException, IOException {
@@ -101,7 +106,7 @@ public class Authentication {
                     cookies.getCookies());
             updateCookies(cookies, response.cookies());
             AuthStatusResponse statusResponseBody = responseHandler.handleResponse(response.body(), AuthStatusResponse.class);
-            status = statusResponseBody.getStatus();
+            status = statusResponseBody.status();
             Thread.sleep(1000);
             if ("Canceled".equals(status)) {
                 throw new AuthenticationException("2FA cancelled by user");
@@ -125,7 +130,7 @@ public class Authentication {
         }
     }
 
-    private void updateCookies(Cookies cookies ,Map<String, String> newCookies) {
+    private void updateCookies(Cookies cookies, Map<String, String> newCookies) {
         cookies.getCookies().putAll(newCookies);
     }
 

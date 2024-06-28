@@ -3,14 +3,12 @@ package com.kontomatik.bankScraper.services;
 import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.ScrapingException;
 import com.kontomatik.bankScraper.models.AccountGroups;
-import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 
 @Component
-@RequiredArgsConstructor
 public class MbankScraper {
     private final UserInteraction userInteraction;
     private final ResponseHandler responseHandler;
@@ -18,6 +16,12 @@ public class MbankScraper {
 
     @Value("${mbank.accounts.url}")
     private String mbankScraperUrl;
+
+    public MbankScraper(UserInteraction userInteraction, ResponseHandler responseHandler, HttpService httpService) {
+        this.userInteraction = userInteraction;
+        this.responseHandler = responseHandler;
+        this.httpService = httpService;
+    }
 
     public void scrape(Cookies cookies) {
         try {

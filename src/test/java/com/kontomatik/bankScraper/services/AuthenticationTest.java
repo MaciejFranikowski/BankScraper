@@ -182,7 +182,7 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(InitTwoFactorResponse.class));
-        when(initTwoFactorResponse.getTranId()).thenReturn("0");
+        when(initTwoFactorResponse.tranId()).thenReturn("0");
         when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenReturn(twoFactorAuthResponse);
 
         when(httpService.sendPostRequest(anyString(), eq(Map.of("TranId", "testTranId")), anyMap())).thenThrow(IOException.class);
@@ -236,7 +236,7 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(InitTwoFactorResponse.class));
-        when(initTwoFactorResponse.getTranId()).thenReturn("0");
+        when(initTwoFactorResponse.tranId()).thenReturn("0");
         when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenReturn(twoFactorAuthResponse);
 
 
@@ -308,7 +308,7 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(InitTwoFactorResponse.class));
-        when(initTwoFactorResponse.getTranId()).thenReturn("0");
+        when(initTwoFactorResponse.tranId()).thenReturn("0");
         when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenReturn(twoFactorAuthResponse);
 
 
@@ -387,7 +387,7 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(InitTwoFactorResponse.class));
-        when(initTwoFactorResponse.getTranId()).thenReturn("0");
+        when(initTwoFactorResponse.tranId()).thenReturn("0");
         when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenReturn(twoFactorAuthResponse);
 
 

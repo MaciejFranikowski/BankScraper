@@ -4,16 +4,14 @@ import com.kontomatik.bankScraper.models.Account;
 import com.kontomatik.bankScraper.models.AccountGroup;
 import com.kontomatik.bankScraper.models.AccountGroups;
 import com.kontomatik.bankScraper.models.Credentials;
-import lombok.Setter;
 import org.springframework.stereotype.Component;
 
 import java.io.Console;
 import java.util.Scanner;
 
-@Setter
 @Component
 public class UserInteraction {
-    private Scanner scanner;
+    private final Scanner scanner;
     private final Console console;
 
     public UserInteraction() {
@@ -46,12 +44,12 @@ public class UserInteraction {
     public String formatAccountGroups(AccountGroups accountGroups) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
-        for (AccountGroup group : accountGroups.accountGroups) {
-            for (Account account : group.accounts) {
-                sb.append("Account Name: ").append(account.name).append("\n");
-                sb.append("Account Number: ").append(account.accountNumber).append("\n");
-                sb.append("Balance: ").append(account.balance).append(" ").append(account.currency).append("\n");
-                sb.append("Custom Name: ").append(account.customName).append("\n");
+        for (AccountGroup group : accountGroups.accountGroups()) {
+            for (Account account : group.accounts()) {
+                sb.append("Account Name: ").append(account.name()).append("\n");
+                sb.append("Account Number: ").append(account.accountNumber()).append("\n");
+                sb.append("Balance: ").append(account.balance()).append(" ").append(account.currency()).append("\n");
+                sb.append("Custom Name: ").append(account.customName()).append("\n");
                 sb.append("\n");
             }
         }
