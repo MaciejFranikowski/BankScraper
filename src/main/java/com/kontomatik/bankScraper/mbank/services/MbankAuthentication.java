@@ -5,7 +5,7 @@ import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.mbank.models.*;
 import com.kontomatik.bankScraper.models.*;
 import com.google.gson.Gson;
-import com.kontomatik.bankScraper.services.Cookies;
+import com.kontomatik.bankScraper.models.Cookies;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;
 import org.jsoup.Connection;

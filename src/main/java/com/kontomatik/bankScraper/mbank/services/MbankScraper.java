@@ -4,7 +4,7 @@ import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.ScrapingException;
 import com.kontomatik.bankScraper.mbank.models.AccountGroups;
 import com.kontomatik.bankScraper.mbank.models.RequestParams;
-import com.kontomatik.bankScraper.services.Cookies;
+import com.kontomatik.bankScraper.models.Cookies;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;
 import org.jsoup.Connection;

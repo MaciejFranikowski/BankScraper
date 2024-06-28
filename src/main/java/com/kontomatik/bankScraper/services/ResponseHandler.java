@@ -3,9 +3,9 @@ package com.kontomatik.bankScraper.services;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 public class ResponseHandler {
     private final Gson gson;
 

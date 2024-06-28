@@ -1,7 +1,7 @@
 package com.kontomatik.bankScraper;
 
 import com.kontomatik.bankScraper.cli.UserInteraction;
-import com.kontomatik.bankScraper.services.Cookies;
+import com.kontomatik.bankScraper.models.Cookies;
 import com.kontomatik.bankScraper.mbank.services.MbankScraper;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

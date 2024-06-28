@@ -5,6 +5,7 @@ import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.mbank.models.AccountGroups;
 import com.kontomatik.bankScraper.mbank.models.RequestParams;
 import com.kontomatik.bankScraper.mbank.services.MbankScraper;
+import com.kontomatik.bankScraper.models.Cookies;
 import org.jsoup.Connection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
