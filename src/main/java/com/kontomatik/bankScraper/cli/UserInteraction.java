@@ -1,5 +1,6 @@
 package com.kontomatik.bankScraper.cli;
 
+import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
 import com.kontomatik.bankScraper.mbank.models.Account;
 import com.kontomatik.bankScraper.mbank.models.AccountGroup;
 import com.kontomatik.bankScraper.mbank.models.AccountGroups;
@@ -22,31 +23,42 @@ public class UserInteraction {
         this(scanner, System.console());
     }
 
-    private UserInteraction(Scanner scanner, Console console) {
+    public UserInteraction(Scanner scanner, Console console) {
         this.scanner = scanner;
         this.console = console;
     }
 
-    public Credentials getCredentials() {
-        if (console != null) {
+    public Credentials getCredentials() throws InvalidCredentials {
+        if (isConsoleAvailable()) {
             return getCredentialsFromConsole(console);
         } else {
             return getCredentialsFromScanner();
         }
     }
 
-    private Credentials getCredentialsFromConsole(Console console) {
+
+    private Credentials getCredentialsFromConsole(Console console) throws InvalidCredentials {
         String username = console.readLine("Enter your username: ");
         String password = new String(console.readPassword("Enter your password: "));
+        if (validateCredentials(username, password)) {
+            throw new InvalidCredentials("Username or password cannot be empty.");
+        }
         return new Credentials(username, password);
     }
 
-    private Credentials getCredentialsFromScanner() {
+    private Credentials getCredentialsFromScanner() throws InvalidCredentials {
         System.out.print("Enter your username: ");
         String username = scanner.nextLine();
         System.out.print("Enter your password: ");
         String password = scanner.nextLine();
+        if (validateCredentials(username, password)) {
+            throw new InvalidCredentials("Username or password cannot be empty.");
+        }
         return new Credentials(username, password);
+    }
+
+    private boolean validateCredentials(String username, String password) {
+        return username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty();
     }
 
     public String formatAccountGroups(AccountGroups accountGroups) {
@@ -68,4 +80,7 @@ public class UserInteraction {
         System.out.println("Two-factor authentication process has started. Please check your device.");
     }
 
+    public boolean isConsoleAvailable() {
+        return console != null;
+    }
 }
