@@ -2,8 +2,9 @@ package com.kontomatik.bankScraper.services;
 
 import com.google.gson.Gson;
 import com.kontomatik.bankScraper.cli.UserInteraction;
-import com.kontomatik.bankScraper.models.AccountGroups;
-import com.kontomatik.bankScraper.models.RequestParams;
+import com.kontomatik.bankScraper.mbank.models.AccountGroups;
+import com.kontomatik.bankScraper.mbank.models.RequestParams;
+import com.kontomatik.bankScraper.mbank.services.MbankScraper;
 import org.jsoup.Connection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

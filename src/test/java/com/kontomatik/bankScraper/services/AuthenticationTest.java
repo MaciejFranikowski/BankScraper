@@ -3,6 +3,8 @@ package com.kontomatik.bankScraper.services;
 import com.google.gson.Gson;
 import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
+import com.kontomatik.bankScraper.mbank.models.*;
+import com.kontomatik.bankScraper.mbank.services.MbankAuthentication;
 import com.kontomatik.bankScraper.models.*;
 import org.jsoup.Connection;
 import org.junit.jupiter.api.BeforeAll;
@@ -26,7 +28,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {Authentication.class})
+@ContextConfiguration(classes = {MbankAuthentication.class})
 class AuthenticationTest {
 
     @SpyBean
@@ -39,7 +41,7 @@ class AuthenticationTest {
     @SpyBean
     private UserInteraction userInteraction;
     @Autowired
-    private Authentication authentication;
+    private MbankAuthentication authentication;
 
     @Value("${mbank.login.url}")
     private String loginUrl;

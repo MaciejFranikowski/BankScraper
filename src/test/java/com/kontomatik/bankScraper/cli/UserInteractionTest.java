@@ -1,8 +1,8 @@
 package com.kontomatik.bankScraper.cli;
 
-import com.kontomatik.bankScraper.models.Account;
-import com.kontomatik.bankScraper.models.AccountGroup;
-import com.kontomatik.bankScraper.models.AccountGroups;
+import com.kontomatik.bankScraper.mbank.models.Account;
+import com.kontomatik.bankScraper.mbank.models.AccountGroup;
+import com.kontomatik.bankScraper.mbank.models.AccountGroups;
 import com.kontomatik.bankScraper.models.Credentials;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

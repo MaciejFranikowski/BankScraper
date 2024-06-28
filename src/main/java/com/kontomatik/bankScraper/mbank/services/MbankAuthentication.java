@@ -1,9 +1,13 @@
-package com.kontomatik.bankScraper.services;
+package com.kontomatik.bankScraper.mbank.services;
 
 import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
+import com.kontomatik.bankScraper.mbank.models.*;
 import com.kontomatik.bankScraper.models.*;
 import com.google.gson.Gson;
+import com.kontomatik.bankScraper.services.Cookies;
+import com.kontomatik.bankScraper.services.JsoupClient;
+import com.kontomatik.bankScraper.services.ResponseHandler;
 import org.jsoup.Connection;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
-public class Authentication {
+public class MbankAuthentication {
 
     private final Gson gson;
     private final JsoupClient jsoupClient;
@@ -47,7 +51,7 @@ public class Authentication {
     @Value("${userAgent}")
     private String userAgent;
 
-    public Authentication(Gson gson, JsoupClient jsoupClient, ResponseHandler responseHandler, UserInteraction userInteraction) {
+    public MbankAuthentication(Gson gson, JsoupClient jsoupClient, ResponseHandler responseHandler, UserInteraction userInteraction) {
         this.gson = gson;
         this.jsoupClient = jsoupClient;
         this.responseHandler = responseHandler;

@@ -1,5 +1,6 @@
 package com.kontomatik.bankScraper.services;
 
+import com.kontomatik.bankScraper.mbank.models.RequestParams;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ public class JsoupClient {
     public Connection.Response sendRequest(
             String url,
             Connection.Method method,
-            com.kontomatik.bankScraper.models.RequestParams params
+            RequestParams params
     ) throws IOException {
         Connection connection = Jsoup.connect(url)
                 .headers(params.headers())

@@ -1,4 +1,4 @@
-package com.kontomatik.bankScraper.models;
+package com.kontomatik.bankScraper.mbank.models;
 
 import com.google.gson.annotations.SerializedName;
 

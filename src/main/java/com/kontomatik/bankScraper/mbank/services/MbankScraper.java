@@ -1,9 +1,12 @@
-package com.kontomatik.bankScraper.services;
+package com.kontomatik.bankScraper.mbank.services;
 
 import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.ScrapingException;
-import com.kontomatik.bankScraper.models.AccountGroups;
-import com.kontomatik.bankScraper.models.RequestParams;
+import com.kontomatik.bankScraper.mbank.models.AccountGroups;
+import com.kontomatik.bankScraper.mbank.models.RequestParams;
+import com.kontomatik.bankScraper.services.Cookies;
+import com.kontomatik.bankScraper.services.JsoupClient;
+import com.kontomatik.bankScraper.services.ResponseHandler;
 import org.jsoup.Connection;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
