@@ -1,6 +1,7 @@
 package com.kontomatik.bankScraper;
 
 import com.kontomatik.bankScraper.cli.UserInteraction;
+import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
 import com.kontomatik.bankScraper.models.Cookies;
 import com.kontomatik.bankScraper.mbank.services.MbankScraper;
 import org.springframework.boot.CommandLineRunner;
@@ -26,7 +27,7 @@ public class BankScraperApplication implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) {
+    public void run(String... args) throws InvalidCredentials {
         Cookies authenticatedCookies = authentication.authenticate(userInteraction.getCredentials());
         mbankScraper.scrape(authenticatedCookies);
     }
