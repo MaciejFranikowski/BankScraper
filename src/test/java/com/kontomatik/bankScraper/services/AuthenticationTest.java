@@ -5,10 +5,12 @@ import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.models.*;
 import org.jsoup.Connection;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -29,10 +31,9 @@ class AuthenticationTest {
 
     @SpyBean
     private Gson gson;
+
     @MockBean
-    private Cookies cookies;
-    @MockBean
-    private HttpService httpService;
+    private JsoupClient jsoupClient;
     @SpyBean
     private ResponseHandler responseHandler;
     @SpyBean
@@ -40,13 +41,92 @@ class AuthenticationTest {
     @Autowired
     private Authentication authentication;
 
+    @Value("${mbank.login.url}")
+    private String loginUrl;
+
+    @Value("${mbank.fetch.csrf.url}")
+    private String fetchCsrfTokenUrl;
+
+    @Value("${mbank.fetch.scaId.url}")
+    private String fetchScaIdUrl;
+
+    @Value("${mbank.begin.twoFactorAuth.url}")
+    private String beginTwoFactorAuthUrl;
+
+    @Value("${mbank.status.twoFactorAuth.url}")
+    private String statusTwoFactorAuthUrl;
+
+    @Value("${mbank.execute.twoFactorAuth.url}")
+    private String executeTwoFactoAuthUrl;
+
+    @Value("${mbank.sca.finalize.url}")
+    private String scaFinalizeUrl;
+
+    static RequestParams loginParams;
+    static RequestParams csrfParams;
+    static RequestParams scaAuthParams;
+    static RequestParams twoFactorAuthParams;
+    static RequestParams twoFactorAuthStatusParams;
+    static RequestParams executeAuthParams;
+    static RequestParams finalizeParams;
+    static RequestParams verifyLoginParams;
+    static Credentials credentials;
+    static Gson staticGson;
+    static Cookies cookies;
+
+
+    @BeforeAll
+    static void prepareTestData() {
+        cookies = mock(Cookies.class);
+        staticGson = new Gson();
+        credentials = new Credentials("testuser", "testpassword");
+        loginParams = new RequestParams.Builder()
+                .data(Map.of("username", credentials.username(), "password", credentials.password()))
+                .ignoreContentType(true)
+                .build();
+        csrfParams = new RequestParams.Builder()
+                .cookies(cookies.getCookies())
+                .ignoreContentType(true)
+                .build();
+        scaAuthParams = new RequestParams.Builder()
+                .cookies(cookies.getCookies())
+                .ignoreContentType(true)
+                .build();
+        twoFactorAuthParams = new RequestParams.Builder()
+                .cookies(cookies.getCookies())
+                .ignoreContentType(true)
+                .data(Map.of("Data", "{\"scaAuthorizationId\": \"testScaId\"}", "Url", "sca/authorization/disposable", "Method", "POST"))
+                .headers(Map.of(
+                        "User-Agent", "${userAgent}",
+                        "X-Request-Verification-Token", "testCsrfToken"))
+                .build();
+        twoFactorAuthStatusParams = new RequestParams.Builder()
+                .cookies(cookies.getCookies())
+                .ignoreContentType(true)
+                .data(Map.of("TranId", "testTranId"))
+                .build();
+        executeAuthParams = new RequestParams.Builder()
+                .cookies(cookies.getCookies())
+                .headers(Map.of("User-Agent",
+                        "${userAgent}",
+                        "X-Request-Verification-Token", "testCsrfToken"))
+                .ignoreContentType(true)
+                .requestBody(staticGson.toJson(new Object()))
+                .build();
+        finalizeParams = new RequestParams.Builder()
+                .cookies(cookies.getCookies())
+                .ignoreContentType(true)
+                .data(Map.of("scaAuthorizationId", "testScaId"))
+                .build();
+        verifyLoginParams = new RequestParams.Builder()
+                .cookies(cookies.getCookies())
+                .ignoreContentType(true)
+                .build();
+    }
+
     @Test
     void shouldThrowExceptionWhenInitialLoginFails() throws IOException {
-        // Given
-        Credentials credentials = new Credentials("testuser", "testpassword");
-
-        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenThrow(IOException.class);
-
+        when(jsoupClient.sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams))).thenThrow(IOException.class);
         // Then
         assertThrows(AuthenticationException.class, () -> authentication.authenticate(credentials));
     }
@@ -54,44 +134,39 @@ class AuthenticationTest {
     @Test
     void shouldThrowExceptionWhenFetchCsrfTokenFails() throws IOException {
         // Given
-        Credentials credentials = new Credentials("testuser", "testpassword");
-
         Connection.Response response = mock(Connection.Response.class);
         when(response.cookies()).thenReturn(new HashMap<>());
 
-        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(response);
-        when(httpService.sendGetRequest(anyString(), anyMap())).thenThrow(IOException.class);
+        when(jsoupClient.sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams))).thenReturn(response);
+        when(jsoupClient.sendRequest(eq(fetchCsrfTokenUrl), eq(Connection.Method.GET), eq(csrfParams))).thenThrow(IOException.class);
 
         // Then
         assertThrows(AuthenticationException.class, () -> authentication.authenticate(credentials));
     }
 
-
     @Test
     void shouldThrowExceptionWhenFetchScaAuthorizationDataFails() throws IOException {
         // Given
-        Credentials credentials = new Credentials("testuser", "testpassword");
         Connection.Response response = mock(Connection.Response.class);
         when(response.cookies()).thenReturn(new HashMap<>());
 
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
+        when(jsoupClient.sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams))).thenReturn(response);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
         when(csrfResponse.cookies()).thenReturn(new HashMap<>());
         when(cookies.getCookies()).thenReturn(new HashMap<>());
-        when(csrfResponse.body()).thenReturn("{\"csrfToken\":\"testCsrfToken\"}");
+        when(csrfResponse.body()).thenReturn("{\"antiForgeryToken\":\"testCsrfToken\"}");
         doAnswer(invocation -> {
             String responseBody = invocation.getArgument(0);
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(CsrfResponse.class));
-        when(httpService.sendGetRequest(anyString(),
-                anyMap())).thenReturn(csrfResponse);
+        when(jsoupClient.sendRequest(eq(fetchCsrfTokenUrl), eq(Connection.Method.GET), eq(csrfParams))).thenReturn(csrfResponse);
 
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap())).thenThrow(IOException.class);
+        when(jsoupClient.sendRequest(eq(fetchScaIdUrl), eq(Connection.Method.POST), eq(scaAuthParams))).thenThrow(IOException.class);
 
         // Then
         assertThrows(AuthenticationException.class, () -> authentication.authenticate(credentials));
@@ -99,26 +174,22 @@ class AuthenticationTest {
 
     @Test
     void shouldThrowExceptionWhenInitTwoFactorAuthFails() throws IOException {
-        // Given
-        Credentials credentials = new Credentials("testuser", "testpassword");
-
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
+        when(jsoupClient.sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
         when(csrfResponse.cookies()).thenReturn(new HashMap<>());
         when(cookies.getCookies()).thenReturn(new HashMap<>());
-        when(csrfResponse.body()).thenReturn("{\"csrfToken\":\"testCsrfToken\"}");
+        when(csrfResponse.body()).thenReturn("{\"antiForgeryToken\":\"testCsrfToken\"}");
         doAnswer(invocation -> {
             String responseBody = invocation.getArgument(0);
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(CsrfResponse.class));
-        when(httpService.sendGetRequest(anyString(),
-                anyMap())).thenReturn(csrfResponse);
+        when(jsoupClient.sendRequest(eq(fetchCsrfTokenUrl), eq(Connection.Method.GET), eq(csrfParams))).thenReturn(csrfResponse);
 
         // fetchScaAuthorizationData when
         Connection.Response scaResponse = mock(Connection.Response.class);
@@ -129,9 +200,9 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(ScaResponse.class));
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap())).thenReturn(scaResponse);
+        when(jsoupClient.sendRequest(eq(fetchScaIdUrl), eq(Connection.Method.POST), eq(scaAuthParams))).thenReturn(scaResponse);
 
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenThrow(IOException.class);
+        when(jsoupClient.sendRequest(eq(beginTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthParams))).thenThrow(IOException.class);
 
         // Then
         assertThrows(AuthenticationException.class, () -> authentication.authenticate(credentials));
@@ -139,26 +210,22 @@ class AuthenticationTest {
 
     @Test
     void shouldThrowExceptionWhenWaitForUserAuthenticationFails() throws IOException {
-        // Given
-        Credentials credentials = new Credentials("testuser", "testpassword");
-
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
+        when(jsoupClient.sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
         when(csrfResponse.cookies()).thenReturn(new HashMap<>());
         when(cookies.getCookies()).thenReturn(new HashMap<>());
-        when(csrfResponse.body()).thenReturn("{\"csrfToken\":\"testCsrfToken\"}");
+        when(csrfResponse.body()).thenReturn("{\"antiForgeryToken\":\"testCsrfToken\"}");
         doAnswer(invocation -> {
             String responseBody = invocation.getArgument(0);
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(CsrfResponse.class));
-        when(httpService.sendGetRequest(anyString(),
-                anyMap())).thenReturn(csrfResponse);
+        when(jsoupClient.sendRequest(eq(fetchCsrfTokenUrl), eq(Connection.Method.GET), eq(csrfParams))).thenReturn(csrfResponse);
 
         // fetchScaAuthorizationData when
         Connection.Response scaResponse = mock(Connection.Response.class);
@@ -169,7 +236,7 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(ScaResponse.class));
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap())).thenReturn(scaResponse);
+        when(jsoupClient.sendRequest(eq(fetchScaIdUrl), eq(Connection.Method.POST), eq(scaAuthParams))).thenReturn(scaResponse);
 
         // initTwoFactorAuth when
         Connection.Response twoFactorAuthResponse = mock(Connection.Response.class);
@@ -183,9 +250,9 @@ class AuthenticationTest {
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(InitTwoFactorResponse.class));
         when(initTwoFactorResponse.tranId()).thenReturn("0");
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenReturn(twoFactorAuthResponse);
+        when(jsoupClient.sendRequest(eq(beginTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthParams))).thenReturn(twoFactorAuthResponse);
 
-        when(httpService.sendPostRequest(anyString(), eq(Map.of("TranId", "testTranId")), anyMap())).thenThrow(IOException.class);
+        when(jsoupClient.sendRequest(eq(statusTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthStatusParams))).thenThrow(IOException.class);
 
         // Then
         assertThrows(AuthenticationException.class, () -> authentication.authenticate(credentials));
@@ -193,26 +260,22 @@ class AuthenticationTest {
 
     @Test
     void shouldThrowExceptionWhenFinalizeAuthorizationFails() throws IOException {
-        // Given
-        Credentials credentials = new Credentials("testuser", "testpassword");
-
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
+        when(jsoupClient.sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
         when(csrfResponse.cookies()).thenReturn(new HashMap<>());
         when(cookies.getCookies()).thenReturn(new HashMap<>());
-        when(csrfResponse.body()).thenReturn("{\"csrfToken\":\"testCsrfToken\"}");
+        when(csrfResponse.body()).thenReturn("{\"antiForgeryToken\":\"testCsrfToken\"}");
         doAnswer(invocation -> {
             String responseBody = invocation.getArgument(0);
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(CsrfResponse.class));
-        when(httpService.sendGetRequest(anyString(),
-                anyMap())).thenReturn(csrfResponse);
+        when(jsoupClient.sendRequest(eq(fetchCsrfTokenUrl), eq(Connection.Method.GET), eq(csrfParams))).thenReturn(csrfResponse);
 
         // fetchScaAuthorizationData when
         Connection.Response scaResponse = mock(Connection.Response.class);
@@ -223,7 +286,7 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(ScaResponse.class));
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap())).thenReturn(scaResponse);
+        when(jsoupClient.sendRequest(eq(fetchScaIdUrl), eq(Connection.Method.POST), eq(scaAuthParams))).thenReturn(scaResponse);
 
         // initTwoFactorAuth when
         Connection.Response twoFactorAuthResponse = mock(Connection.Response.class);
@@ -237,8 +300,7 @@ class AuthenticationTest {
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(InitTwoFactorResponse.class));
         when(initTwoFactorResponse.tranId()).thenReturn("0");
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenReturn(twoFactorAuthResponse);
-
+        when(jsoupClient.sendRequest(eq(beginTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthParams))).thenReturn(twoFactorAuthResponse);
 
         // waitForUserAuthentication when
         Connection.Response authStatusResponse = mock(Connection.Response.class);
@@ -249,15 +311,12 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(AuthStatusResponse.class));
-        when(httpService.sendPostRequest(anyString(), eq(Map.of("TranId", "testTranId")), anyMap())).thenReturn(authStatusResponse);
+        when(jsoupClient.sendRequest(eq(statusTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthStatusParams))).thenReturn(authStatusResponse);
 
         Connection.Response executeResponse = mock(Connection.Response.class);
         when(executeResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendExecutionRequest(anyString(), anyString(), anyMap(), anyString())).thenReturn(executeResponse);
-        when(httpService.sendPostRequest(anyString(),
-                eq(Map.of("scaAuthorizationId", "testScaId")),
-                anyMap(), eq("testCsrfToken"))).thenThrow(IOException.class);
-
+        when(jsoupClient.sendRequest(eq(executeTwoFactoAuthUrl), eq(Connection.Method.POST), eq(executeAuthParams))).thenReturn(executeResponse);
+        when(jsoupClient.sendRequest(eq(scaFinalizeUrl), eq(Connection.Method.POST), eq(finalizeParams))).thenThrow(IOException.class);
 
         // Then
         assertThrows(AuthenticationException.class, () -> authentication.authenticate(credentials));
@@ -265,26 +324,22 @@ class AuthenticationTest {
 
     @Test
     void shouldThrowExceptionWhenVerifyCorrectLoginFails() throws IOException {
-        // Given
-        Credentials credentials = new Credentials("testuser", "testpassword");
-
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
+        when(jsoupClient.sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
         when(csrfResponse.cookies()).thenReturn(new HashMap<>());
         when(cookies.getCookies()).thenReturn(new HashMap<>());
-        when(csrfResponse.body()).thenReturn("{\"csrfToken\":\"testCsrfToken\"}");
+        when(csrfResponse.body()).thenReturn("{\"antiForgeryToken\":\"testCsrfToken\"}");
         doAnswer(invocation -> {
             String responseBody = invocation.getArgument(0);
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(CsrfResponse.class));
-        when(httpService.sendGetRequest(anyString(),
-                anyMap())).thenReturn(csrfResponse);
+        when(jsoupClient.sendRequest(eq(fetchCsrfTokenUrl), eq(Connection.Method.GET), eq(csrfParams))).thenReturn(csrfResponse);
 
         // fetchScaAuthorizationData when
         Connection.Response scaResponse = mock(Connection.Response.class);
@@ -295,7 +350,7 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(ScaResponse.class));
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap())).thenReturn(scaResponse);
+        when(jsoupClient.sendRequest(eq(fetchScaIdUrl), eq(Connection.Method.POST), eq(scaAuthParams))).thenReturn(scaResponse);
 
         // initTwoFactorAuth when
         Connection.Response twoFactorAuthResponse = mock(Connection.Response.class);
@@ -309,7 +364,7 @@ class AuthenticationTest {
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(InitTwoFactorResponse.class));
         when(initTwoFactorResponse.tranId()).thenReturn("0");
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenReturn(twoFactorAuthResponse);
+        when(jsoupClient.sendRequest(eq(beginTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthParams))).thenReturn(twoFactorAuthResponse);
 
 
         // waitForUserAuthentication when
@@ -321,22 +376,19 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(AuthStatusResponse.class));
-        when(httpService.sendPostRequest(anyString(), eq(Map.of("TranId", "testTranId")), anyMap())).thenReturn(authStatusResponse);
+        when(jsoupClient.sendRequest(eq(statusTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthStatusParams))).thenReturn(authStatusResponse);
 
         // finalizeAuthorization when
         Connection.Response executeResponse = mock(Connection.Response.class);
         when(executeResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendExecutionRequest(anyString(), anyString(), anyMap(), anyString())).thenReturn(executeResponse);
-        when(httpService.sendPostRequest(anyString(),
-                eq(Map.of("scaAuthorizationId", "testScaId")),
-                anyMap(), eq("testCsrfToken"))).thenReturn(authStatusResponse);
+        when(jsoupClient.sendRequest(eq(executeTwoFactoAuthUrl), eq(Connection.Method.POST), eq(executeAuthParams))).thenReturn(executeResponse);
+        when(jsoupClient.sendRequest(eq(scaFinalizeUrl), eq(Connection.Method.POST), eq(finalizeParams))).thenReturn(authStatusResponse);
 
         // verifyCorrectLogin when
         Connection.Response verifyResponse = mock(Connection.Response.class);
         when(verifyResponse.statusCode()).thenReturn(200);
-        ArgumentMatcher<String> urlMatcher = url -> url.startsWith(
-                "${mbank.init.url}");
-        when(httpService.sendGetRequest(argThat(urlMatcher), anyMap())).thenThrow(IOException.class);
+        ArgumentMatcher<String> urlMatcher = url -> url.startsWith("${mbank.init.url}");
+        when(jsoupClient.sendRequest(argThat(urlMatcher), eq(Connection.Method.GET), eq(verifyLoginParams))).thenThrow((IOException.class));
 
         // Then
         assertThrows(AuthenticationException.class, () -> authentication.authenticate(credentials));
@@ -344,26 +396,22 @@ class AuthenticationTest {
 
     @Test
     void shouldAuthenticate() throws IOException {
-        // Given
-        Credentials credentials = new Credentials("testuser", "testpassword");
-
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
+        when(jsoupClient.sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
         when(csrfResponse.cookies()).thenReturn(new HashMap<>());
         when(cookies.getCookies()).thenReturn(new HashMap<>());
-        when(csrfResponse.body()).thenReturn("{\"csrfToken\":\"testCsrfToken\"}");
+        when(csrfResponse.body()).thenReturn("{\"antiForgeryToken\":\"testCsrfToken\"}");
         doAnswer(invocation -> {
             String responseBody = invocation.getArgument(0);
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(CsrfResponse.class));
-        when(httpService.sendGetRequest(anyString(),
-                anyMap())).thenReturn(csrfResponse);
+        when(jsoupClient.sendRequest(eq(fetchCsrfTokenUrl), eq(Connection.Method.GET), eq(csrfParams))).thenReturn(csrfResponse);
 
         // fetchScaAuthorizationData when
         Connection.Response scaResponse = mock(Connection.Response.class);
@@ -374,7 +422,7 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(ScaResponse.class));
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap())).thenReturn(scaResponse);
+        when(jsoupClient.sendRequest(eq(fetchScaIdUrl), eq(Connection.Method.POST), eq(scaAuthParams))).thenReturn(scaResponse);
 
         // initTwoFactorAuth when
         Connection.Response twoFactorAuthResponse = mock(Connection.Response.class);
@@ -388,7 +436,7 @@ class AuthenticationTest {
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(InitTwoFactorResponse.class));
         when(initTwoFactorResponse.tranId()).thenReturn("0");
-        when(httpService.sendPostRequest(anyString(), anyMap(), anyMap(), anyString())).thenReturn(twoFactorAuthResponse);
+        when(jsoupClient.sendRequest(eq(beginTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthParams))).thenReturn(twoFactorAuthResponse);
 
 
         // waitForUserAuthentication when
@@ -400,31 +448,31 @@ class AuthenticationTest {
             Class<?> responseClass = invocation.getArgument(1);
             return gson.fromJson(responseBody, responseClass);
         }).when(responseHandler).handleResponse(anyString(), eq(AuthStatusResponse.class));
-        when(httpService.sendPostRequest(anyString(), eq(Map.of("TranId", "testTranId")), anyMap())).thenReturn(authStatusResponse);
+        when(jsoupClient.sendRequest(eq(statusTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthStatusParams))).thenReturn(authStatusResponse);
 
         // finalizeAuthorization when
         Connection.Response executeResponse = mock(Connection.Response.class);
         when(executeResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendExecutionRequest(anyString(), anyString(), anyMap(), anyString())).thenReturn(executeResponse);
-        when(httpService.sendPostRequest(anyString(),
-                eq(Map.of("scaAuthorizationId", "testScaId")),
-                anyMap(), eq("testCsrfToken"))).thenReturn(authStatusResponse);
+        when(jsoupClient.sendRequest(eq(executeTwoFactoAuthUrl), eq(Connection.Method.POST), eq(executeAuthParams))).thenReturn(executeResponse);
+        when(jsoupClient.sendRequest(eq(scaFinalizeUrl), eq(Connection.Method.POST), eq(finalizeParams))).thenReturn(authStatusResponse);
 
         // verifyCorrectLogin when
         Connection.Response verifyResponse = mock(Connection.Response.class);
         when(verifyResponse.statusCode()).thenReturn(200);
-        ArgumentMatcher<String> urlMatcher = url -> url.startsWith(
-                "${mbank.init.url}");
-        when(httpService.sendGetRequest(argThat(urlMatcher), anyMap())).thenReturn(verifyResponse);
-
+        ArgumentMatcher<String> urlMatcher = url -> url.startsWith("${mbank.init.url}");
+        when(jsoupClient.sendRequest(argThat(urlMatcher), eq(Connection.Method.GET), eq(verifyLoginParams))).thenReturn(verifyResponse);
 
         // Then
         assertDoesNotThrow(() -> authentication.authenticate(credentials));
 
-        verify(httpService).sendPostRequest(anyString(), any(Credentials.class)); // initialLogin
-        verify(httpService, times(2)).sendGetRequest(anyString(), anyMap()); // fetchCsrfToken and verifyCorrectLogin
-        verify(httpService, times(2)).sendPostRequest(anyString(), anyMap(), anyMap()); // fetchScaAuthorizationData and initTwoFactorAuth
-        verify(httpService, times(2)).sendPostRequest(anyString(), anyMap(), anyMap(), anyString()); // initTwoFactorAuth and finalizeAuthorization
-        verify(httpService).sendExecutionRequest(anyString(), anyString(), anyMap(), anyString()); // finalizeAuthorization
+        verify(jsoupClient).sendRequest(eq(loginUrl), eq(Connection.Method.POST), eq(loginParams));
+        verify(jsoupClient).sendRequest(eq(fetchCsrfTokenUrl), eq(Connection.Method.GET), eq(csrfParams));
+        verify(jsoupClient).sendRequest(eq(fetchScaIdUrl), eq(Connection.Method.POST), eq(scaAuthParams));
+        verify(jsoupClient).sendRequest(eq(beginTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthParams));
+        verify(jsoupClient).sendRequest(eq(statusTwoFactorAuthUrl), eq(Connection.Method.POST), eq(twoFactorAuthStatusParams));
+        verify(jsoupClient).sendRequest(eq(executeTwoFactoAuthUrl), eq(Connection.Method.POST), eq(executeAuthParams));
+        verify(jsoupClient).sendRequest(eq(scaFinalizeUrl), eq(Connection.Method.POST), eq(finalizeParams));
+        verify(jsoupClient).sendRequest(argThat(urlMatcher), eq(Connection.Method.GET), eq(verifyLoginParams));
+
     }
 }

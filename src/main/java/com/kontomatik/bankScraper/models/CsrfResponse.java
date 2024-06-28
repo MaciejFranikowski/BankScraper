@@ -1,4 +1,6 @@
 package com.kontomatik.bankScraper.models;
 
-public record CsrfResponse(String csrfToken) {
+import com.google.gson.annotations.SerializedName;
+
+public record CsrfResponse(@SerializedName("antiForgeryToken") String csrfToken) {
 }

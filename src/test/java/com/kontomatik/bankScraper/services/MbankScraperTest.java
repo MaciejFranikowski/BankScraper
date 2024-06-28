@@ -3,6 +3,7 @@ package com.kontomatik.bankScraper.services;
 import com.google.gson.Gson;
 import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.models.AccountGroups;
+import com.kontomatik.bankScraper.models.RequestParams;
 import org.jsoup.Connection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,7 +32,7 @@ class MbankScraperTest {
     @SpyBean
     private ResponseHandler responseHandler;
     @MockBean
-    private HttpService httpService;
+    private JsoupClient jsoupClient;
     @Autowired
     private MbankScraper mbankScraper;
 
@@ -89,10 +91,13 @@ class MbankScraperTest {
                     }
                 }
                 """;
-
+        RequestParams requestParams = new RequestParams.Builder()
+                .cookies(new HashMap<>())
+                .ignoreContentType(true)
+                .build();
 
         Connection.Response response = mock(Connection.Response.class);
-        when(httpService.sendGetRequest(anyString(), anyMap())).thenReturn(response);
+        when(jsoupClient.sendRequest(eq("${mbank.accounts.url}"), eq(Connection.Method.GET), eq(requestParams))).thenReturn(response);
         when(response.body()).thenReturn(jsonString);
         doAnswer(invocation -> {
             String responseBody = invocation.getArgument(0);
@@ -104,7 +109,7 @@ class MbankScraperTest {
         mbankScraper.scrape(new Cookies());
 
         // Then
-        verify(httpService).sendGetRequest(anyString(), anyMap());
+        verify(jsoupClient).sendRequest(eq("${mbank.accounts.url}"), eq(Connection.Method.GET), eq(requestParams));
         verify(responseHandler).handleResponse(anyString(), eq(AccountGroups.class));
         // Verify the UserInteraction formatting method was called with the correct object
         ArgumentCaptor<AccountGroups> captor = ArgumentCaptor.forClass(AccountGroups.class);
@@ -122,13 +127,17 @@ class MbankScraperTest {
     @Test
     void shouldHandleErrorResponse() throws Exception {
         // Given
-        when(httpService.sendGetRequest(anyString(), anyMap())).thenThrow(IOException.class);
+        RequestParams requestParams = new RequestParams.Builder()
+                .cookies(new HashMap<>())
+                .ignoreContentType(true)
+                .build();
+        when(jsoupClient.sendRequest(eq("${mbank.accounts.url}"), eq(Connection.Method.GET), eq(requestParams))).thenThrow(IOException.class);
 
         // When / Then
         assertThrows(RuntimeException.class, () -> mbankScraper.scrape(new Cookies()));
 
         // Verify interactions
-        verify(httpService).sendGetRequest(anyString(), anyMap());
+        verify(jsoupClient).sendRequest(eq("${mbank.accounts.url}"), eq(Connection.Method.GET), eq(requestParams));
         verifyNoInteractions(responseHandler);
         verifyNoInteractions(userInteraction);
     }
