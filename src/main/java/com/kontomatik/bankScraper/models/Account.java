@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 
 @ToString
 @AllArgsConstructor
-@Builder
 @Getter
 public class Account {
     public String accountNumber;

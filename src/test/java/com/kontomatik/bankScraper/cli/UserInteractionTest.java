@@ -44,32 +44,7 @@ class UserInteractionTest {
     @Test
     void shouldProperlyFormatAccounts() {
         // given
-        Account account1 = Account.builder()
-                .name("Account1")
-                .accountNumber("123456")
-                .balance(new BigDecimal("1000.0"))
-                .currency("USD")
-                .customName("CustomAccount1")
-                .build();
-
-        Account account2 = Account.builder()
-                .name("Account2")
-                .accountNumber("654321")
-                .balance(new BigDecimal("2000.0"))
-                .currency("EUR")
-                .customName("CustomAccount2")
-                .build();
-        List<Account> accounts1 = new ArrayList<>();
-        accounts1.add(account1);
-        List<Account> accounts2 = new ArrayList<>();
-        accounts2.add(account2);
-
-        AccountGroup group1 = new AccountGroup(accounts1);
-        AccountGroup group2 = new AccountGroup(accounts2);
-
-        List<AccountGroup> accountGroupsList = new ArrayList<>();
-        accountGroupsList.add(group1);
-        accountGroupsList.add(group2);
+        List<AccountGroup> accountGroupsList = prepareAccountGroups();
 
         AccountGroups accountGroups = new AccountGroups(accountGroupsList);
 
@@ -92,5 +67,35 @@ class UserInteractionTest {
 
         // Redirect the standard output to capture the print statements
         assertEquals(expectedOutput, result);
+    }
+
+    private static List<AccountGroup> prepareAccountGroups() {
+        Account account1 = new Account(
+                "123456",
+                new BigDecimal("1000.0"),
+                "USD",
+                "Account1",
+                "CustomAccount1"
+        );
+
+        Account account2 = new Account(
+                "654321",
+                new BigDecimal("2000.0"),
+                "EUR",
+                "Account2",
+                "CustomAccount2"
+        );
+        List<Account> accounts1 = new ArrayList<>();
+        accounts1.add(account1);
+        List<Account> accounts2 = new ArrayList<>();
+        accounts2.add(account2);
+
+        AccountGroup group1 = new AccountGroup(accounts1);
+        AccountGroup group2 = new AccountGroup(accounts2);
+
+        List<AccountGroup> accountGroupsList = new ArrayList<>();
+        accountGroupsList.add(group1);
+        accountGroupsList.add(group2);
+        return accountGroupsList;
     }
 }
