@@ -1,5 +1,6 @@
 package com.kontomatik.bankScraper.cli;
 
+import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
 import com.kontomatik.bankScraper.mbank.models.Account;
 import com.kontomatik.bankScraper.mbank.models.AccountGroup;
 import com.kontomatik.bankScraper.mbank.models.AccountGroups;
@@ -7,28 +8,50 @@ import com.kontomatik.bankScraper.models.Credentials;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.Console;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
-
 
 class UserInteractionTest {
     private Scanner scanner;
+    private Console console;
+
     private UserInteraction userInteraction;
 
     @BeforeEach
     void setUp() {
         scanner = mock(Scanner.class);
-        userInteraction = new UserInteraction(scanner);
+        console = mock(Console.class);
+        userInteraction = spy(new UserInteraction(scanner, console));
     }
 
     @Test
-    void shouldInvokeScannerAndProperlyReadCredentials() {
+    public void shouldThrowInvalidCredentialsWhenConsoleInputsAreEmpty() {
+        when(console.readLine("Enter your username: ")).thenReturn("");
+        when(console.readPassword("Enter your password: ")).thenReturn("".toCharArray());
+
+        assertThrows(InvalidCredentials.class, () -> userInteraction.getCredentials());
+    }
+
+    @Test
+    public void shouldThrowInvalidCredentialsWhenScannerInputsAreEmpty() {
         // given
+        when(userInteraction.isConsoleAvailable()).thenReturn(false);
+        when(scanner.nextLine()).thenReturn("");
+        // when & then
+        assertThrows(InvalidCredentials.class, () -> userInteraction.getCredentials());
+    }
+
+    @Test
+    void shouldInvokeScannerAndProperlyReadCredentials() throws InvalidCredentials {
+        // given
+        when(userInteraction.isConsoleAvailable()).thenReturn(false);
         when(scanner.nextLine()).thenReturn("testUser", "testPass");
 
         // when
@@ -38,6 +61,34 @@ class UserInteractionTest {
         assertEquals("testUser", credentials.username());
         assertEquals("testPass", credentials.password());
         verify(scanner, times(2)).nextLine();
+    }
+
+    @Test
+    public void shouldReturnValidCredentialsWhenConsoleInputsAreValid() throws InvalidCredentials {
+        when(console.readLine("Enter your username: ")).thenReturn("validUser");
+        when(console.readPassword("Enter your password: ")).thenReturn("validPass".toCharArray());
+
+        Credentials credentials = userInteraction.getCredentials();
+        assertEquals("validUser", credentials.username());
+        assertEquals("validPass", credentials.password());
+    }
+
+    @Test
+    public void shouldThrowInvalidCredentialsWhenUsernameIsEmptyAndPasswordIsValid() {
+        when(console.readLine("Enter your username: ")).thenReturn("");
+        when(console.readPassword("Enter your password: ")).thenReturn("validPass".toCharArray());
+
+        InvalidCredentials exception = assertThrows(InvalidCredentials.class, () -> userInteraction.getCredentials());
+        assertEquals("Username or password cannot be empty.", exception.getMessage());
+    }
+
+    @Test
+    public void shouldThrowInvalidCredentialsWhenPasswordIsEmptyAndUsernameIsValid() {
+        when(console.readLine("Enter your username: ")).thenReturn("validUser");
+        when(console.readPassword("Enter your password: ")).thenReturn("".toCharArray());
+
+        InvalidCredentials exception = assertThrows(InvalidCredentials.class, () -> userInteraction.getCredentials());
+        assertEquals("Username or password cannot be empty.", exception.getMessage());
     }
 
     @Test
@@ -64,7 +115,6 @@ class UserInteractionTest {
         // when
         var result = userInteraction.formatAccountGroups(accountGroups);
 
-        // Redirect the standard output to capture the print statements
         assertEquals(expectedOutput, result);
     }
 
