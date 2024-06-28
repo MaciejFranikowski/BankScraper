@@ -101,12 +101,6 @@ class MbankScraperTest {
         Connection.Response response = mock(Connection.Response.class);
         when(jsoupClient.sendRequest(eq("${mbank.accounts.url}"), eq(Connection.Method.GET), eq(requestParams))).thenReturn(response);
         when(response.body()).thenReturn(jsonString);
-        doAnswer(invocation -> {
-            String responseBody = invocation.getArgument(0);
-            Class<?> responseClass = invocation.getArgument(1);
-            return gson.fromJson(responseBody, responseClass);
-        }).when(responseHandler).handleResponse(anyString(), eq(AccountGroups.class));
-
         // When
         mbankScraper.scrape(new Cookies());
 
