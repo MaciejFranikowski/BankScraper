@@ -99,6 +99,7 @@ public class Authentication {
 
     private void waitForUserAuthentication(String twoFactorAuthToken, Cookies cookies) throws InterruptedException, IOException {
         String status;
+        int attempts = 0;
         do {
             Connection.Response response = httpService.sendPostRequest(
                     statusTwoFactorAuthUrl,
@@ -110,6 +111,10 @@ public class Authentication {
             Thread.sleep(1000);
             if ("Canceled".equals(status)) {
                 throw new AuthenticationException("2FA cancelled by user");
+            }
+            attempts++;
+            if (attempts >= 30) {
+                throw new AuthenticationException("Timeout (30s) reached for 2FA verification");
             }
         } while (!"Authorized".equals(status));
     }
