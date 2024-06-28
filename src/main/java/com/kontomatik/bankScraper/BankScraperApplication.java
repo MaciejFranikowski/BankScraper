@@ -1,6 +1,7 @@
 package com.kontomatik.bankScraper;
 
 import com.kontomatik.bankScraper.cli.UserInteraction;
+import com.kontomatik.bankScraper.services.Cookies;
 import com.kontomatik.bankScraper.services.MbankScraper;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -26,8 +27,8 @@ public class BankScraperApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        authentication.authenticate(userInteraction.getCredentials());
-        mbankScraper.scrape();
+        Cookies authenticatedCookies = authentication.authenticate(userInteraction.getCredentials());
+        mbankScraper.scrape(authenticatedCookies);
     }
 
 }

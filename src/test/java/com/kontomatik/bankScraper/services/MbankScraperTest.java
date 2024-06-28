@@ -26,8 +26,6 @@ class MbankScraperTest {
     @SpyBean
     private UserInteraction userInteraction;
     @SpyBean
-    private Cookies cookies;
-    @SpyBean
     private Gson gson;
     @SpyBean
     private ResponseHandler responseHandler;
@@ -103,7 +101,7 @@ class MbankScraperTest {
         }).when(responseHandler).handleResponse(anyString(), eq(AccountGroups.class));
 
         // When
-        mbankScraper.scrape();
+        mbankScraper.scrape(new Cookies());
 
         // Then
         verify(httpService).sendGetRequest(anyString(), anyMap());
@@ -127,7 +125,7 @@ class MbankScraperTest {
         when(httpService.sendGetRequest(anyString(), anyMap())).thenThrow(IOException.class);
 
         // When / Then
-        assertThrows(RuntimeException.class, () -> mbankScraper.scrape());
+        assertThrows(RuntimeException.class, () -> mbankScraper.scrape(new Cookies()));
 
         // Verify interactions
         verify(httpService).sendGetRequest(anyString(), anyMap());

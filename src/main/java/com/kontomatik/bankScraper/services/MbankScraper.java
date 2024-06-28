@@ -13,14 +13,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MbankScraper {
     private final UserInteraction userInteraction;
-    private final Cookies cookies;
     private final ResponseHandler responseHandler;
     private final HttpService httpService;
 
     @Value("${mbank.accounts.url}")
     private String mbankScraperUrl;
 
-    public void scrape() {
+    public void scrape(Cookies cookies) {
         try {
             Connection.Response response = httpService.sendGetRequest(mbankScraperUrl, cookies.getCookies());
             AccountGroups groups = responseHandler.handleResponse(response.body(), AccountGroups.class);

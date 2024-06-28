@@ -46,37 +46,40 @@ public class Authentication {
     @Value("${mbank.init.url}")
     private String initUrl;
 
-    public void authenticate(HashMap<String, String> credentials) {
+    public Cookies authenticate(Credentials credentials) {
         try {
-            initialLogin(credentials);
-            String csrfToken = fetchCsrfToken().getCsrfToken();
-            String scaId = fetchScaAuthorizationData().getScaAuthorizationId();
-            String twoFactorAuthToken = initTwoFactorAuth(scaId, csrfToken);
-            waitForUserAuthentication(twoFactorAuthToken);
-            finalizeAuthorization(scaId, csrfToken);
+            Cookies cookies = new Cookies();
+            initialLogin(credentials, cookies);
+            String csrfToken = fetchCsrfToken(cookies).getCsrfToken();
+            String scaId = fetchScaAuthorizationData(cookies).getScaAuthorizationId();
+            String twoFactorAuthToken = initTwoFactorAuth(scaId, csrfToken, cookies);
+            userInteraction.notifyTwoFactorAuthStart();
+            waitForUserAuthentication(twoFactorAuthToken, cookies);
+            finalizeAuthorization(scaId, csrfToken, cookies);
+            return cookies;
         } catch (IOException | InterruptedException e) {
             throw new AuthenticationException("Authentication failed: " + e.getMessage(), e);
         }
     }
 
-    private void initialLogin(HashMap<String, String> credentials) throws IOException {
+    private void initialLogin(Credentials credentials, Cookies cookies) throws IOException {
         Connection.Response response = httpService.sendPostRequest(loginUrl, credentials);
         cookies.setCookies(new HashMap<>(response.cookies()));
     }
 
-    private CsrfResponse fetchCsrfToken() throws IOException {
+    private CsrfResponse fetchCsrfToken(Cookies cookies) throws IOException {
         Connection.Response response = httpService.sendGetRequest(fetchCsrfTokenUrl, cookies.getCookies());
-        updateCookies(response.cookies());
+        updateCookies(cookies, response.cookies());
         return responseHandler.handleResponse(response.body(), CsrfResponse.class);
     }
 
-    private ScaResponse fetchScaAuthorizationData() throws IOException {
+    private ScaResponse fetchScaAuthorizationData(Cookies cookies) throws IOException {
         Connection.Response response = httpService.sendPostRequest(fetchScaIdUrl, new HashMap<>(), cookies.getCookies());
-        updateCookies(response.cookies());
+        updateCookies(cookies, response.cookies());
         return responseHandler.handleResponse(response.body(), ScaResponse.class);
     }
 
-    private String initTwoFactorAuth(String scaId, String csrfToken) throws IOException {
+    private String initTwoFactorAuth(String scaId, String csrfToken, Cookies cookies) throws IOException {
         Map<String, String> requestData = new HashMap<>();
         requestData.put("Data", new InitTwoFactorData(scaId).toString());
         requestData.put("Url", "sca/authorization/disposable");
@@ -84,18 +87,18 @@ public class Authentication {
 
         Connection.Response response = httpService.sendPostRequest(beginTwoFactorAuthUrl, requestData, cookies.getCookies(), csrfToken);
         InitTwoFactorResponse initResponse = responseHandler.handleResponse(response.body(), InitTwoFactorResponse.class);
-        updateCookies(response.cookies());
+        updateCookies(cookies, response.cookies());
         return initResponse.getTranId();
     }
 
-    private void waitForUserAuthentication(String twoFactorAuthToken) throws InterruptedException, IOException {
+    private void waitForUserAuthentication(String twoFactorAuthToken, Cookies cookies) throws InterruptedException, IOException {
         String status;
         do {
             Connection.Response response = httpService.sendPostRequest(
                     statusTwoFactorAuthUrl,
                     Map.of("TranId", twoFactorAuthToken),
                     cookies.getCookies());
-            updateCookies(response.cookies());
+            updateCookies(cookies, response.cookies());
             AuthStatusResponse statusResponseBody = responseHandler.handleResponse(response.body(), AuthStatusResponse.class);
             status = statusResponseBody.getStatus();
             Thread.sleep(1000);
@@ -105,23 +108,23 @@ public class Authentication {
         } while (!"Authorized".equals(status));
     }
 
-    private void finalizeAuthorization(String scaId, String csrfToken) throws IOException {
+    private void finalizeAuthorization(String scaId, String csrfToken, Cookies cookies) throws IOException {
         Connection.Response response = httpService.sendExecutionRequest(executeTwoFactoAuthUrl, gson.toJson(new Object()), cookies.getCookies(), csrfToken);
-        updateCookies(response.cookies());
+        updateCookies(cookies, response.cookies());
         response = httpService.sendPostRequest(
                 scaFinalizeUrl, Map.of("scaAuthorizationId", scaId), cookies.getCookies(), csrfToken);
-        updateCookies(response.cookies());
-        verifyCorrectLogin();
+        updateCookies(cookies, response.cookies());
+        verifyCorrectLogin(cookies);
     }
 
-    private void verifyCorrectLogin() throws IOException {
+    private void verifyCorrectLogin(Cookies cookies) throws IOException {
         Connection.Response response = httpService.sendGetRequest(initUrl + "?_=" + LocalDateTime.now(), cookies.getCookies());
         if (response.statusCode() != 200) {
             throw new AuthenticationException("Login failed");
         }
     }
 
-    private void updateCookies(Map<String, String> newCookies) {
+    private void updateCookies(Cookies cookies ,Map<String, String> newCookies) {
         cookies.getCookies().putAll(newCookies);
     }
 
