@@ -2,10 +2,7 @@ package com.kontomatik.bankScraper.services;
 
 import com.google.gson.Gson;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
-import com.kontomatik.bankScraper.models.AuthStatusResponse;
-import com.kontomatik.bankScraper.models.CsrfResponse;
-import com.kontomatik.bankScraper.models.InitTwoFactorResponse;
-import com.kontomatik.bankScraper.models.ScaResponse;
+import com.kontomatik.bankScraper.models.*;
 import org.jsoup.Connection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,11 +40,9 @@ class AuthenticationTest {
     @Test
     void shouldThrowExceptionWhenInitialLoginFails() throws IOException {
         // Given
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "testuser");
-        credentials.put("password", "testpassword");
+        Credentials credentials = new Credentials("testuser", "testpassword");
 
-        when(httpService.sendPostRequest(anyString(), anyMap())).thenThrow(IOException.class);
+        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenThrow(IOException.class);
 
         // Then
         assertThrows(AuthenticationException.class, () -> authentication.authenticate(credentials));
@@ -56,14 +51,12 @@ class AuthenticationTest {
     @Test
     void shouldThrowExceptionWhenFetchCsrfTokenFails() throws IOException {
         // Given
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "testuser");
-        credentials.put("password", "testpassword");
+        Credentials credentials = new Credentials("testuser", "testpassword");
 
         Connection.Response response = mock(Connection.Response.class);
         when(response.cookies()).thenReturn(new HashMap<>());
 
-        when(httpService.sendPostRequest(anyString(), anyMap())).thenReturn(response);
+        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(response);
         when(httpService.sendGetRequest(anyString(), anyMap())).thenThrow(IOException.class);
 
         // Then
@@ -74,15 +67,13 @@ class AuthenticationTest {
     @Test
     void shouldThrowExceptionWhenFetchScaAuthorizationDataFails() throws IOException {
         // Given
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "testuser");
-        credentials.put("password", "testpassword");
+        Credentials credentials = new Credentials("testuser", "testpassword");
         Connection.Response response = mock(Connection.Response.class);
         when(response.cookies()).thenReturn(new HashMap<>());
 
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), anyMap())).thenReturn(loginResponse);
+        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
@@ -106,14 +97,12 @@ class AuthenticationTest {
     @Test
     void shouldThrowExceptionWhenInitTwoFactorAuthFails() throws IOException {
         // Given
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "testuser");
-        credentials.put("password", "testpassword");
+        Credentials credentials = new Credentials("testuser", "testpassword");
 
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), anyMap())).thenReturn(loginResponse);
+        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
@@ -148,14 +137,12 @@ class AuthenticationTest {
     @Test
     void shouldThrowExceptionWhenWaitForUserAuthenticationFails() throws IOException {
         // Given
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "testuser");
-        credentials.put("password", "testpassword");
+        Credentials credentials = new Credentials("testuser", "testpassword");
 
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), anyMap())).thenReturn(loginResponse);
+        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
@@ -204,14 +191,12 @@ class AuthenticationTest {
     @Test
     void shouldThrowExceptionWhenFinalizeAuthorizationFails() throws IOException {
         // Given
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "testuser");
-        credentials.put("password", "testpassword");
+        Credentials credentials = new Credentials("testuser", "testpassword");
 
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), anyMap())).thenReturn(loginResponse);
+        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
@@ -278,14 +263,12 @@ class AuthenticationTest {
     @Test
     void shouldThrowExceptionWhenVerifyCorrectLoginFails() throws IOException {
         // Given
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "testuser");
-        credentials.put("password", "testpassword");
+        Credentials credentials = new Credentials("testuser", "testpassword");
 
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), anyMap())).thenReturn(loginResponse);
+        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
@@ -359,14 +342,12 @@ class AuthenticationTest {
     @Test
     void shouldAuthenticate() throws IOException {
         // Given
-        HashMap<String, String> credentials = new HashMap<>();
-        credentials.put("username", "testuser");
-        credentials.put("password", "testpassword");
+        Credentials credentials = new Credentials("testuser", "testpassword");
 
         // initialLogin when
         Connection.Response loginResponse = mock(Connection.Response.class);
         when(loginResponse.cookies()).thenReturn(new HashMap<>());
-        when(httpService.sendPostRequest(anyString(), anyMap())).thenReturn(loginResponse);
+        when(httpService.sendPostRequest(anyString(), any(Credentials.class))).thenReturn(loginResponse);
 
         // fetchCsrfToken when
         Connection.Response csrfResponse = mock(Connection.Response.class);
@@ -437,7 +418,7 @@ class AuthenticationTest {
         // Then
         assertDoesNotThrow(() -> authentication.authenticate(credentials));
 
-        verify(httpService).sendPostRequest(anyString(), anyMap()); // initialLogin
+        verify(httpService).sendPostRequest(anyString(), any(Credentials.class)); // initialLogin
         verify(httpService, times(2)).sendGetRequest(anyString(), anyMap()); // fetchCsrfToken and verifyCorrectLogin
         verify(httpService, times(2)).sendPostRequest(anyString(), anyMap(), anyMap()); // fetchScaAuthorizationData and initTwoFactorAuth
         verify(httpService, times(2)).sendPostRequest(anyString(), anyMap(), anyMap(), anyString()); // initTwoFactorAuth and finalizeAuthorization

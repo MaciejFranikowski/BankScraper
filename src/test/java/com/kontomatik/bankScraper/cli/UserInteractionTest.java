@@ -3,12 +3,12 @@ package com.kontomatik.bankScraper.cli;
 import com.kontomatik.bankScraper.models.Account;
 import com.kontomatik.bankScraper.models.AccountGroup;
 import com.kontomatik.bankScraper.models.AccountGroups;
+import com.kontomatik.bankScraper.models.Credentials;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
@@ -33,11 +33,11 @@ class UserInteractionTest {
         when(scanner.nextLine()).thenReturn("testUser", "testPass");
 
         // when
-        HashMap<String, String> credentials = userInteraction.getCredentials();
+        Credentials credentials = userInteraction.getCredentials();
 
         // then
-        assertEquals("testUser", credentials.get("username"));
-        assertEquals("testPass", credentials.get("password"));
+        assertEquals("testUser", credentials.username());
+        assertEquals("testPass", credentials.password());
         verify(scanner, times(2)).nextLine();
     }
 
