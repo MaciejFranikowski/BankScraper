@@ -15,8 +15,16 @@ public class UserInteraction {
     private final Console console;
 
     public UserInteraction() {
-        this.scanner = new Scanner(System.in);
-        this.console = System.console();
+        this(new Scanner(System.in), System.console());
+    }
+
+    public UserInteraction(Scanner scanner) {
+        this(scanner, System.console());
+    }
+
+    private UserInteraction(Scanner scanner, Console console) {
+        this.scanner = scanner;
+        this.console = console;
     }
 
     public Credentials getCredentials() {

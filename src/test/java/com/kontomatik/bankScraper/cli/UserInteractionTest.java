@@ -23,8 +23,7 @@ class UserInteractionTest {
     @BeforeEach
     void setUp() {
         scanner = mock(Scanner.class);
-        userInteraction = new UserInteraction();
-        userInteraction.setScanner(scanner);
+        userInteraction = new UserInteraction(scanner);
     }
 
     @Test
