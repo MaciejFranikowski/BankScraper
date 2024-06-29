@@ -18,6 +18,7 @@ public class JsoupClient {
         Connection connection = Jsoup.connect(url)
                 .headers(params.headers())
                 .ignoreContentType(params.ignoreContentType())
+                .ignoreHttpErrors(true)
                 .cookies(params.cookies())
                 .method(method);
 
@@ -26,7 +27,6 @@ public class JsoupClient {
         } else {
             connection.data(params.data());
         }
-
         return connection.execute();
     }
 }
