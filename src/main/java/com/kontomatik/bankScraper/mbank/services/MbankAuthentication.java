@@ -1,11 +1,13 @@
 package com.kontomatik.bankScraper.mbank.services;
 
+import com.google.gson.Gson;
 import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
+import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
+import com.kontomatik.bankScraper.exceptions.ResponseHandlingException;
 import com.kontomatik.bankScraper.mbank.models.*;
-import com.kontomatik.bankScraper.models.*;
-import com.google.gson.Gson;
 import com.kontomatik.bankScraper.models.Cookies;
+import com.kontomatik.bankScraper.models.Credentials;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;
 import org.jsoup.Connection;
@@ -13,16 +15,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
 public class MbankAuthentication {
-
     private final Gson gson;
     private final JsoupClient jsoupClient;
     private final ResponseHandler responseHandler;
     private final UserInteraction userInteraction;
+
+
+    @Value("${mbank.base.url}")
+    private String baseUrl;
 
     @Value("${mbank.login.url}")
     private String loginUrl;
@@ -42,14 +46,14 @@ public class MbankAuthentication {
     @Value("${mbank.execute.twoFactorAuth.url}")
     private String executeTwoFactoAuthUrl;
 
-    @Value("${mbank.sca.finalize.url}")
+    @Value("${mbank.finalize.twoFactorAuth.url}")
     private String scaFinalizeUrl;
-
-    @Value("${mbank.init.url}")
-    private String initUrl;
 
     @Value("${userAgent}")
     private String userAgent;
+
+    @Value("${mbank.accounts.url}")
+    private String mbankScraperUrl;
 
     public MbankAuthentication(Gson gson, JsoupClient jsoupClient, ResponseHandler responseHandler, UserInteraction userInteraction) {
         this.gson = gson;
@@ -69,50 +73,75 @@ public class MbankAuthentication {
             waitForUserAuthentication(twoFactorAuthToken, cookies);
             finalizeAuthorization(scaId, csrfToken, cookies);
             return cookies;
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException | InterruptedException | InvalidCredentials | ResponseHandlingException e) {
             throw new AuthenticationException("Authentication failed: " + e.getMessage(), e);
         }
     }
 
-    private void initialLogin(Credentials credentials, Cookies cookies) throws IOException {
+    private void initialLogin(Credentials credentials, Cookies cookies) throws IOException, InvalidCredentials, ResponseHandlingException {
         RequestParams params = new RequestParams.Builder()
                 .data(Map.of("username", credentials.username(), "password", credentials.password()))
                 .ignoreContentType(true)
                 .build();
         Connection.Response response = jsoupClient.sendRequest(
-                loginUrl,
+                baseUrl + loginUrl,
                 Connection.Method.POST,
                 params);
+        LoginResponse longinResponse = responseHandler.handleResponse(response.body(), LoginResponse.class);
+        validateLoginResponse(longinResponse);
         updateCookies(cookies, response.cookies());
     }
 
-    private CsrfResponse fetchCsrfToken(Cookies cookies) throws IOException {
+    private void validateLoginResponse(LoginResponse longinResponse) throws InvalidCredentials {
+        String errorMessageTitle = "Nieprawidłowy identyfikator lub hasło.";
+        if (longinResponse == null || (!longinResponse.successful() && longinResponse.errorMessageTitle().equals(errorMessageTitle))) {
+            throw new InvalidCredentials("Passed credentials are invalid.");
+        }
+    }
+
+    private CsrfResponse fetchCsrfToken(Cookies cookies) throws IOException, ResponseHandlingException {
         RequestParams params = new RequestParams.Builder()
                 .cookies(cookies.getCookies())
                 .ignoreContentType(true)
                 .build();
         Connection.Response response = jsoupClient.sendRequest(
-                fetchCsrfTokenUrl,
+                baseUrl + fetchCsrfTokenUrl,
                 Connection.Method.GET,
                 params);
+        CsrfResponse csrfResponse = responseHandler.handleResponse(response.body(), CsrfResponse.class);
+        validateCsrfResponse(csrfResponse);
         updateCookies(cookies, response.cookies());
-        return responseHandler.handleResponse(response.body(), CsrfResponse.class);
+        return csrfResponse;
     }
 
-    private ScaResponse fetchScaAuthorizationData(Cookies cookies) throws IOException {
+    private void validateCsrfResponse(CsrfResponse csrfResponse) throws AuthenticationException {
+        if (csrfResponse == null || csrfResponse.csrfToken() == null || csrfResponse.csrfToken().isEmpty()) {
+            throw new AuthenticationException("Failed to fetch CSRF token");
+        }
+    }
+
+    private ScaResponse fetchScaAuthorizationData(Cookies cookies) throws IOException, ResponseHandlingException {
         RequestParams params = new RequestParams.Builder()
                 .cookies(cookies.getCookies())
                 .ignoreContentType(true)
                 .build();
         Connection.Response response = jsoupClient.sendRequest(
-                fetchScaIdUrl,
+                baseUrl + fetchScaIdUrl,
                 Connection.Method.POST,
                 params);
+        ScaResponse scaResponse = responseHandler.handleResponse(response.body(), ScaResponse.class);
+        validateScaResponse(scaResponse);
         updateCookies(cookies, response.cookies());
         return responseHandler.handleResponse(response.body(), ScaResponse.class);
     }
 
-    private String initTwoFactorAuth(String scaId, String csrfToken, Cookies cookies) throws IOException {
+    private void validateScaResponse(ScaResponse scaResponse) {
+        if (scaResponse == null || scaResponse.scaAuthorizationId() == null || scaResponse.scaAuthorizationId().isEmpty()) {
+            throw new AuthenticationException("Failed to fetch SCA authorization data");
+        }
+    }
+
+    private String initTwoFactorAuth(String scaId, String csrfToken, Cookies cookies) throws IOException, ResponseHandlingException {
         RequestParams params = new RequestParams.Builder()
                 .cookies(cookies.getCookies())
                 .ignoreContentType(true)
@@ -120,15 +149,23 @@ public class MbankAuthentication {
                 .headers(Map.of("User-Agent", userAgent, "X-Request-Verification-Token", csrfToken))
                 .build();
         Connection.Response response = jsoupClient.sendRequest(
-                beginTwoFactorAuthUrl,
+                baseUrl + beginTwoFactorAuthUrl,
                 Connection.Method.POST,
                 params);
         InitTwoFactorResponse initResponse = responseHandler.handleResponse(response.body(), InitTwoFactorResponse.class);
+        validateInitTwoFactorResponse(initResponse);
         updateCookies(cookies, response.cookies());
         return initResponse.tranId();
     }
 
-    private void waitForUserAuthentication(String twoFactorAuthToken, Cookies cookies) throws InterruptedException, IOException {
+    private void validateInitTwoFactorResponse(InitTwoFactorResponse initResponse) {
+        if (initResponse == null || initResponse.tranId() == null || initResponse.tranId().isEmpty()) {
+            throw new AuthenticationException("Failed to initialize 2FA");
+        }
+
+    }
+
+    private void waitForUserAuthentication(String twoFactorAuthToken, Cookies cookies) throws InterruptedException, IOException, ResponseHandlingException {
         String status;
         int attempts = 0;
         do {
@@ -138,21 +175,32 @@ public class MbankAuthentication {
                     .data(Map.of("TranId", twoFactorAuthToken))
                     .build();
             Connection.Response response = jsoupClient.sendRequest(
-                    statusTwoFactorAuthUrl,
+                    baseUrl + statusTwoFactorAuthUrl,
                     Connection.Method.POST,
                     params);
             updateCookies(cookies, response.cookies());
             AuthStatusResponse statusResponseBody = responseHandler.handleResponse(response.body(), AuthStatusResponse.class);
             status = statusResponseBody.status();
-            Thread.sleep(1000);
-            if ("Canceled".equals(status)) {
-                throw new AuthenticationException("2FA cancelled by user");
-            }
+            validateStatusFetch(status);
+            validateStatusNotCancelled(status);
             attempts++;
             if (attempts >= 30) {
                 throw new AuthenticationException("Timeout (30s) reached for 2FA verification");
             }
+            Thread.sleep(1000);
         } while (!"Authorized".equals(status));
+    }
+
+    private void validateStatusNotCancelled(String status) {
+        if ("Canceled".equals(status)) {
+            throw new AuthenticationException("2FA cancelled by user");
+        }
+    }
+
+    private void validateStatusFetch(String status) {
+        if (status == null || status.isEmpty()) {
+            throw new AuthenticationException("Failed to fetch 2FA status");
+        }
     }
 
     private void finalizeAuthorization(String scaId, String csrfToken, Cookies cookies) throws IOException {
@@ -162,22 +210,35 @@ public class MbankAuthentication {
                 .ignoreContentType(true)
                 .requestBody(gson.toJson(new Object()))
                 .build();
-        Connection.Response response = jsoupClient.sendRequest(
-                executeTwoFactoAuthUrl,
+        Connection.Response executeAuthResponse = jsoupClient.sendRequest(
+                baseUrl + executeTwoFactoAuthUrl,
                 Connection.Method.POST,
                 params);
-        updateCookies(cookies, response.cookies());
+        validateExecuteAuthResponse(executeAuthResponse);
+        updateCookies(cookies, executeAuthResponse.cookies());
         RequestParams finalizeParams = new RequestParams.Builder()
                 .cookies(cookies.getCookies())
                 .ignoreContentType(true)
                 .data(Map.of("scaAuthorizationId", scaId))
                 .build();
-        response = jsoupClient.sendRequest(
-                scaFinalizeUrl,
+        Connection.Response finalizeAuthResponse = jsoupClient.sendRequest(
+                baseUrl + scaFinalizeUrl,
                 Connection.Method.POST,
                 finalizeParams);
-        updateCookies(cookies, response.cookies());
+        validateFinalizeAuthResponse(finalizeAuthResponse);
+        updateCookies(cookies, finalizeAuthResponse.cookies());
         verifyCorrectLogin(cookies);
+    }
+
+    private void validateFinalizeAuthResponse(Connection.Response finalizeAuthResponse) {
+        if (finalizeAuthResponse.statusCode() != 200)
+            throw new AuthenticationException("Failed to finalize 2FA");
+    }
+
+    private void validateExecuteAuthResponse(Connection.Response response) {
+        if (response.statusCode() != 200) {
+            throw new AuthenticationException("Failed to execute 2FA");
+        }
     }
 
     private void verifyCorrectLogin(Cookies cookies) throws IOException {
@@ -186,11 +247,11 @@ public class MbankAuthentication {
                 .ignoreContentType(true)
                 .build();
         Connection.Response response = jsoupClient.sendRequest(
-                initUrl + "?_=" + LocalDateTime.now(),
+                baseUrl + mbankScraperUrl,
                 Connection.Method.GET,
                 params);
         if (response.statusCode() != 200) {
-            throw new AuthenticationException("Login failed");
+            throw new AuthenticationException("Login verification failed");
         }
     }
 
@@ -201,5 +262,4 @@ public class MbankAuthentication {
     private String wrapScaIdIntoJson(String scaId) {
         return "{\"scaAuthorizationId\": \"" + scaId + "\"}";
     }
-
 }
