@@ -210,7 +210,7 @@ class JsoupClientTest {
     }
 
     @Test
-    void shouldThrowUnsupportedMimeTypeException() throws IOException {
+    void shouldThrowUnsupportedMimeTypeException() {
         var expectedStatus = 200;
 
         stubFor(get(urlEqualTo("/emptyJsonResponse"))
