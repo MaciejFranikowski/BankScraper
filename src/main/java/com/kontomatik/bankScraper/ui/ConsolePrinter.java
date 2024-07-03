@@ -16,9 +16,9 @@ public class ConsolePrinter {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
         for (Account account : accounts) {
-            sb.append("Account Name: ").append(account.getName()).append("\n");
-            sb.append("Account Number: ").append(account.getAccountNumber()).append("\n");
-            sb.append("Balance: ").append(account.getBalance()).append("\n");
+            sb.append("Account Name: ").append(account.name()).append("\n");
+            sb.append("Account Number: ").append(account.accountNumber()).append("\n");
+            sb.append("Balance: ").append(account.balance()).append("\n");
             sb.append("\n");
         }
         return sb.toString();
