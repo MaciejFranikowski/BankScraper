@@ -1,12 +1,11 @@
 package com.kontomatik.bankScraper;
 
 import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
-import com.kontomatik.bankScraper.mbank.models.Account;
-import com.kontomatik.bankScraper.mbank.models.Cookies;
-import com.kontomatik.bankScraper.mbank.services.MbankAuthentication;
-import com.kontomatik.bankScraper.mbank.services.MbankScraper;
+import com.kontomatik.bankScraper.models.Account;
 import com.kontomatik.bankScraper.models.Credentials;
+import com.kontomatik.bankScraper.services.BankOperationsService;
 import com.kontomatik.bankScraper.ui.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,18 +18,18 @@ import java.util.Scanner;
 @SpringBootApplication
 public class BankScraperApplication implements CommandLineRunner {
 
-    private final MbankAuthentication authentication;
-    private final MbankScraper mbankScraper;
     private final ConsolePrinter consolePrinter;
     private final UserInputHandler userInputHandler;
+    private final BankOperationsService bankOperationsService;
 
     public static void main(String[] args) {
         SpringApplication.run(BankScraperApplication.class, args);
     }
 
-    public BankScraperApplication(MbankAuthentication authentication, MbankScraper mbankScraper, ConsolePrinter consolePrinter, UserInputHandler userInputHandler) {
-        this.authentication = authentication;
-        this.mbankScraper = mbankScraper;
+    public BankScraperApplication(@Qualifier("mbankOperations") BankOperationsService bankOperationsService,
+                                  ConsolePrinter consolePrinter,
+                                  UserInputHandler userInputHandler) {
+        this.bankOperationsService = bankOperationsService;
         this.consolePrinter = consolePrinter;
         this.userInputHandler = userInputHandler;
     }
@@ -38,8 +37,7 @@ public class BankScraperApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws InvalidCredentials {
         Credentials credentials = userInputHandler.getCredentials();
-        Cookies authenticatedCookies = authentication.authenticate(credentials);
-        List<Account> accounts = mbankScraper.scrape(authenticatedCookies);
+        List<Account> accounts = bankOperationsService.fetchAccountData(credentials);
         consolePrinter.printAccountGroups(accounts);
     }
 
