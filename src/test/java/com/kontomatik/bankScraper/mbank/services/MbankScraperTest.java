@@ -2,7 +2,6 @@ package com.kontomatik.bankScraper.mbank.services;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;
-import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.ScrapingException;
 import com.kontomatik.bankScraper.models.Cookies;
 import com.kontomatik.bankScraper.services.JsoupClient;
@@ -28,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.*;
         MbankScraper.class,
         JsoupClient.class,
         ResponseHandler.class,
-        UserInteraction.class,
         ResponseHandler.class
 })
 @TestPropertySource("classpath:application-test.properties")

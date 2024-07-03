@@ -2,11 +2,11 @@ package com.kontomatik.bankScraper.mbank.services;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;
-import com.kontomatik.bankScraper.cli.UserInteraction;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.models.Credentials;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;
+import com.kontomatik.bankScraper.ui.ConsolePrinter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,8 +27,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @ContextConfiguration(classes = {
         MbankAuthentication.class,
         JsoupClient.class,
+        ConsolePrinter.class,
         ResponseHandler.class,
-        UserInteraction.class,
         ResponseHandler.class
 })
 @TestPropertySource("classpath:application-test.properties")

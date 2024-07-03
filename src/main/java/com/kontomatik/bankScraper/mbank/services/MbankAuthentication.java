@@ -1,7 +1,7 @@
 package com.kontomatik.bankScraper.mbank.services;
 
 import com.google.gson.Gson;
-import com.kontomatik.bankScraper.cli.UserInteraction;
+import com.kontomatik.bankScraper.ui.ConsolePrinter;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
 import com.kontomatik.bankScraper.exceptions.ResponseHandlingException;
@@ -22,7 +22,7 @@ public class MbankAuthentication {
     private final Gson gson;
     private final JsoupClient jsoupClient;
     private final ResponseHandler responseHandler;
-    private final UserInteraction userInteraction;
+    private final ConsolePrinter consolePrinter;
 
 
     @Value("${mbank.base.url}")
@@ -55,11 +55,11 @@ public class MbankAuthentication {
     @Value("${mbank.accounts.url}")
     private String mbankScraperUrl;
 
-    public MbankAuthentication(Gson gson, JsoupClient jsoupClient, ResponseHandler responseHandler, UserInteraction userInteraction) {
+    public MbankAuthentication(Gson gson, JsoupClient jsoupClient, ResponseHandler responseHandler, ConsolePrinter consolePrinter) {
         this.gson = gson;
         this.jsoupClient = jsoupClient;
         this.responseHandler = responseHandler;
-        this.userInteraction = userInteraction;
+        this.consolePrinter = consolePrinter;
     }
 
     public Cookies authenticate(Credentials credentials) {
@@ -69,7 +69,7 @@ public class MbankAuthentication {
             String csrfToken = fetchCsrfToken(cookies).csrfToken();
             String scaId = fetchScaAuthorizationData(cookies).scaAuthorizationId();
             String twoFactorAuthToken = initTwoFactorAuth(scaId, csrfToken, cookies);
-            userInteraction.notifyTwoFactorAuthStart();
+            consolePrinter.notifyTwoFactorAuthStart();
             waitForUserAuthentication(twoFactorAuthToken, cookies);
             finalizeAuthorization(scaId, csrfToken, cookies);
             return cookies;
