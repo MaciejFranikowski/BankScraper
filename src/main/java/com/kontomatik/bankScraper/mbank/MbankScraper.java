@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 
 @Component
-public class MbankScraper {
+class MbankScraper {
     private final ResponseHandler responseHandler;
     private final JsoupClient jsoupClient;
 
@@ -32,7 +32,7 @@ public class MbankScraper {
         this.jsoupClient = jsoupClient;
     }
 
-    public List<Account> scrape(Cookies cookies) {
+    List<Account> scrape(Cookies cookies) {
         try {
             RequestParams requestParams = new RequestParams.Builder()
                     .cookies(cookies.getCookies())

@@ -3,17 +3,17 @@ package com.kontomatik.bankScraper.mbank;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Cookies {
+class Cookies {
     private final Map<String, String> cookies = new HashMap<>();
 
-    public Cookies() {
+    Cookies() {
     }
 
-    public Map<String, String> getCookies() {
+    Map<String, String> getCookies() {
         return Map.copyOf(cookies);
     }
 
-    public void addCookies(Map<String, String> newCookies) {
+    void addCookies(Map<String, String> newCookies) {
         cookies.putAll(newCookies);
     }
 }

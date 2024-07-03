@@ -1,10 +1,8 @@
-package com.kontomatik.bankScraper.mbank.services;
+package com.kontomatik.bankScraper.mbank;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;
 import com.kontomatik.bankScraper.exceptions.ScrapingException;
-import com.kontomatik.bankScraper.mbank.MbankScraper;
-import com.kontomatik.bankScraper.mbank.Cookies;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;
 import org.junit.jupiter.api.AfterEach;

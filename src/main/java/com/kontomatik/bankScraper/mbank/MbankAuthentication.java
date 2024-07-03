@@ -1,13 +1,13 @@
 package com.kontomatik.bankScraper.mbank;
 
 import com.google.gson.Gson;
-import com.kontomatik.bankScraper.ui.ConsolePrinter;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
 import com.kontomatik.bankScraper.exceptions.ResponseHandlingException;
 import com.kontomatik.bankScraper.models.Credentials;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;
+import com.kontomatik.bankScraper.ui.ConsolePrinter;
 import org.jsoup.Connection;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @Service
-public class MbankAuthentication {
+class MbankAuthentication {
     private final Gson gson;
     private final JsoupClient jsoupClient;
     private final ResponseHandler responseHandler;
@@ -53,14 +53,14 @@ public class MbankAuthentication {
     @Value("${mbank.accounts.url}")
     private String mbankScraperUrl;
 
-    public MbankAuthentication(Gson gson, JsoupClient jsoupClient, ResponseHandler responseHandler, ConsolePrinter consolePrinter) {
+    MbankAuthentication(Gson gson, JsoupClient jsoupClient, ResponseHandler responseHandler, ConsolePrinter consolePrinter) {
         this.gson = gson;
         this.jsoupClient = jsoupClient;
         this.responseHandler = responseHandler;
         this.consolePrinter = consolePrinter;
     }
 
-    public Cookies authenticate(Credentials credentials) {
+    Cookies authenticate(Credentials credentials) {
         try {
             Cookies cookies = new Cookies();
             initialLogin(credentials, cookies);

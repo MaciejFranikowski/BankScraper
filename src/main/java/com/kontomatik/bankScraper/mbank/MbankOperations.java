@@ -7,15 +7,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
 @Service
 public class MbankOperations implements BankOperationsService {
-    MbankAuthentication authentication;
-    MbankScraper mbankScraper;
+    final MbankAuthentication authentication;
+    final MbankScraper mbankScraper;
+
     @Autowired
-    public MbankOperations(MbankAuthentication authentication, MbankScraper mbankScraper) {
+    MbankOperations(MbankAuthentication authentication, MbankScraper mbankScraper) {
         this.authentication = authentication;
         this.mbankScraper = mbankScraper;
     }
+
     @Override
     public List<Account> fetchAccountData(Credentials credentials) {
         Cookies authenticatedCookies = authentication.authenticate(credentials);
