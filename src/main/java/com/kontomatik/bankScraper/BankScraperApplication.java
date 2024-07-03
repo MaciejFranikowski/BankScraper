@@ -1,10 +1,10 @@
 package com.kontomatik.bankScraper;
 
 import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
-import com.kontomatik.bankScraper.mbank.models.AccountGroups;
+import com.kontomatik.bankScraper.mbank.models.Account;
+import com.kontomatik.bankScraper.mbank.models.Cookies;
 import com.kontomatik.bankScraper.mbank.services.MbankAuthentication;
 import com.kontomatik.bankScraper.mbank.services.MbankScraper;
-import com.kontomatik.bankScraper.mbank.models.Cookies;
 import com.kontomatik.bankScraper.models.Credentials;
 import com.kontomatik.bankScraper.ui.*;
 import org.springframework.boot.CommandLineRunner;
@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import java.io.Console;
+import java.util.List;
 import java.util.Scanner;
 
 @SpringBootApplication
@@ -38,8 +39,8 @@ public class BankScraperApplication implements CommandLineRunner {
     public void run(String... args) throws InvalidCredentials {
         Credentials credentials = userInputHandler.getCredentials();
         Cookies authenticatedCookies = authentication.authenticate(credentials);
-        AccountGroups accountGroups = mbankScraper.scrape(authenticatedCookies);
-        consolePrinter.printAccountGroups(accountGroups);
+        List<Account> accounts = mbankScraper.scrape(authenticatedCookies);
+        consolePrinter.printAccountGroups(accounts);
     }
 
     @Bean
