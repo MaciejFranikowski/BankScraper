@@ -1,6 +1,6 @@
 package com.kontomatik.bankScraper.services;
 
-import com.kontomatik.bankScraper.mbank.models.RequestParams;
+import com.kontomatik.bankScraper.mbank.RequestParams;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;

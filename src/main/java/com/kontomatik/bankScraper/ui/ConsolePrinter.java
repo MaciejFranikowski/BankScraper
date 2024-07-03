@@ -1,6 +1,6 @@
 package com.kontomatik.bankScraper.ui;
 
-import com.kontomatik.bankScraper.mbank.models.Account;
+import com.kontomatik.bankScraper.models.Account;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,10 +16,9 @@ public class ConsolePrinter {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
         for (Account account : accounts) {
-            sb.append("Account Name: ").append(account.name()).append("\n");
-            sb.append("Account Number: ").append(account.accountNumber()).append("\n");
-            sb.append("Balance: ").append(account.balance()).append(" ").append(account.currency()).append("\n");
-            sb.append("Custom Name: ").append(account.customName()).append("\n");
+            sb.append("Account Name: ").append(account.getName()).append("\n");
+            sb.append("Account Number: ").append(account.getAccountNumber()).append("\n");
+            sb.append("Balance: ").append(account.getBalance()).append("\n");
             sb.append("\n");
         }
         return sb.toString();

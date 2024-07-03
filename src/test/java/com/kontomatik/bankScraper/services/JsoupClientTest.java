@@ -1,7 +1,7 @@
 package com.kontomatik.bankScraper.services;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.kontomatik.bankScraper.mbank.models.RequestParams;
+import com.kontomatik.bankScraper.mbank.RequestParams;
 import org.jsoup.Connection;
 import org.jsoup.UnsupportedMimeTypeException;
 import org.junit.jupiter.api.AfterEach;

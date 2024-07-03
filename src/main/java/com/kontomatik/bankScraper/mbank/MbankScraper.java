@@ -1,11 +1,8 @@
-package com.kontomatik.bankScraper.mbank.services;
+package com.kontomatik.bankScraper.mbank;
 
 import com.kontomatik.bankScraper.exceptions.ResponseHandlingException;
 import com.kontomatik.bankScraper.exceptions.ScrapingException;
-import com.kontomatik.bankScraper.mbank.models.Account;
-import com.kontomatik.bankScraper.mbank.models.AccountGroups;
-import com.kontomatik.bankScraper.mbank.models.Cookies;
-import com.kontomatik.bankScraper.mbank.models.RequestParams;
+import com.kontomatik.bankScraper.models.Account;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;
 import org.jsoup.Connection;
@@ -30,7 +27,7 @@ public class MbankScraper {
     @Value("${mbank.base.url}")
     private String baseUrl;
 
-    public MbankScraper(ResponseHandler responseHandler, JsoupClient jsoupClient) {
+    MbankScraper(ResponseHandler responseHandler, JsoupClient jsoupClient) {
         this.responseHandler = responseHandler;
         this.jsoupClient = jsoupClient;
     }
@@ -54,7 +51,7 @@ public class MbankScraper {
         }
     }
 
-    public List<Account> flattenAccountGroups(AccountGroups accountGroups) {
+    private List<Account> flattenAccountGroups(AccountGroups accountGroups) {
         return Optional.ofNullable(accountGroups)
                 .map(AccountGroups::accountGroups)
                 .orElse(Collections.emptyList())

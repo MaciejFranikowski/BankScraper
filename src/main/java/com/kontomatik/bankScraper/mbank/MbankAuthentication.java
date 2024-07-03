@@ -1,12 +1,10 @@
-package com.kontomatik.bankScraper.mbank.services;
+package com.kontomatik.bankScraper.mbank;
 
 import com.google.gson.Gson;
 import com.kontomatik.bankScraper.ui.ConsolePrinter;
 import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
 import com.kontomatik.bankScraper.exceptions.ResponseHandlingException;
-import com.kontomatik.bankScraper.mbank.models.*;
-import com.kontomatik.bankScraper.mbank.models.Cookies;
 import com.kontomatik.bankScraper.models.Credentials;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;

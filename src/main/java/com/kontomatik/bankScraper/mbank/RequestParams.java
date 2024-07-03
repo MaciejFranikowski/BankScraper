@@ -1,4 +1,4 @@
-package com.kontomatik.bankScraper.mbank.models;
+package com.kontomatik.bankScraper.mbank;
 
 import java.util.HashMap;
 import java.util.Map;
