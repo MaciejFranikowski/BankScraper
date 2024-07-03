@@ -6,7 +6,7 @@ import com.kontomatik.bankScraper.exceptions.AuthenticationException;
 import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
 import com.kontomatik.bankScraper.exceptions.ResponseHandlingException;
 import com.kontomatik.bankScraper.mbank.models.*;
-import com.kontomatik.bankScraper.models.Cookies;
+import com.kontomatik.bankScraper.mbank.models.Cookies;
 import com.kontomatik.bankScraper.models.Credentials;
 import com.kontomatik.bankScraper.services.JsoupClient;
 import com.kontomatik.bankScraper.services.ResponseHandler;
@@ -89,7 +89,7 @@ public class MbankAuthentication {
                 params);
         LoginResponse longinResponse = responseHandler.handleResponse(response.body(), LoginResponse.class);
         validateLoginResponse(longinResponse);
-        updateCookies(cookies, response.cookies());
+        cookies.addCookies(response.cookies());
     }
 
     private void validateLoginResponse(LoginResponse longinResponse) throws InvalidCredentials {
@@ -110,7 +110,7 @@ public class MbankAuthentication {
                 params);
         CsrfResponse csrfResponse = responseHandler.handleResponse(response.body(), CsrfResponse.class);
         validateCsrfResponse(csrfResponse);
-        updateCookies(cookies, response.cookies());
+        cookies.addCookies(response.cookies());
         return csrfResponse;
     }
 
@@ -131,7 +131,7 @@ public class MbankAuthentication {
                 params);
         ScaResponse scaResponse = responseHandler.handleResponse(response.body(), ScaResponse.class);
         validateScaResponse(scaResponse);
-        updateCookies(cookies, response.cookies());
+        cookies.addCookies(response.cookies());
         return responseHandler.handleResponse(response.body(), ScaResponse.class);
     }
 
@@ -154,7 +154,7 @@ public class MbankAuthentication {
                 params);
         InitTwoFactorResponse initResponse = responseHandler.handleResponse(response.body(), InitTwoFactorResponse.class);
         validateInitTwoFactorResponse(initResponse);
-        updateCookies(cookies, response.cookies());
+        cookies.addCookies(response.cookies());
         return initResponse.tranId();
     }
 
@@ -178,7 +178,7 @@ public class MbankAuthentication {
                     baseUrl + statusTwoFactorAuthUrl,
                     Connection.Method.POST,
                     params);
-            updateCookies(cookies, response.cookies());
+            cookies.addCookies(response.cookies());
             AuthStatusResponse statusResponseBody = responseHandler.handleResponse(response.body(), AuthStatusResponse.class);
             status = statusResponseBody.status();
             validateStatusFetch(status);
@@ -215,7 +215,7 @@ public class MbankAuthentication {
                 Connection.Method.POST,
                 params);
         validateExecuteAuthResponse(executeAuthResponse);
-        updateCookies(cookies, executeAuthResponse.cookies());
+        cookies.addCookies(executeAuthResponse.cookies());
         RequestParams finalizeParams = new RequestParams.Builder()
                 .cookies(cookies.getCookies())
                 .ignoreContentType(true)
@@ -226,7 +226,7 @@ public class MbankAuthentication {
                 Connection.Method.POST,
                 finalizeParams);
         validateFinalizeAuthResponse(finalizeAuthResponse);
-        updateCookies(cookies, finalizeAuthResponse.cookies());
+        cookies.addCookies(finalizeAuthResponse.cookies());
         verifyCorrectLogin(cookies);
     }
 
@@ -253,10 +253,6 @@ public class MbankAuthentication {
         if (response.statusCode() != 200) {
             throw new AuthenticationException("Login verification failed");
         }
-    }
-
-    private void updateCookies(Cookies cookies, Map<String, String> newCookies) {
-        cookies.getCookies().putAll(newCookies);
     }
 
     private String wrapScaIdIntoJson(String scaId) {

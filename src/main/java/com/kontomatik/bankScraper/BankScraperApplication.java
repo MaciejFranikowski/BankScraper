@@ -4,7 +4,7 @@ import com.kontomatik.bankScraper.exceptions.InvalidCredentials;
 import com.kontomatik.bankScraper.mbank.models.AccountGroups;
 import com.kontomatik.bankScraper.mbank.services.MbankAuthentication;
 import com.kontomatik.bankScraper.mbank.services.MbankScraper;
-import com.kontomatik.bankScraper.models.Cookies;
+import com.kontomatik.bankScraper.mbank.models.Cookies;
 import com.kontomatik.bankScraper.models.Credentials;
 import com.kontomatik.bankScraper.ui.*;
 import org.springframework.boot.CommandLineRunner;
